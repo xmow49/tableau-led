@@ -216,7 +216,9 @@ void checkIPCFile()
 
                 std::string speed = j_complete["SPEED"];
                 printf("SPEED: %s\n", speed.c_str());
-                gifInfo.currentSpeed = atoi(gif.c_str()); // applique le changement
+                gifInfo.currentSpeed = atoi(speed.c_str()); // applique le changement
+                printf("currentSpeed: %d\n", gifInfo.currentSpeed);
+
               }
 
               // if (key == "TO")
@@ -552,20 +554,27 @@ void DisplayAnimation(const FileInfo *file,
 
   for (uint16_t frame = 0; (frame < matrixGifsList[gifInfo.currentGIF].currentGifFrameCount - 1) && !interrupt_received; frame++)
   {
+
+    
+    //-------------------Gestion des transition fluides ------------------------
     for (int i = 0; i < 3; i++)
     {
-      if (currentSensor[i] < smoothSensorsValues[i])
+      if (currentSensor[i] < smoothSensorsValues[i])// si la nouvelle valeur du capteur est inférieur a la dernière enregistrer,
       {
-        smoothSensorsValues[i]--;
+        smoothSensorsValues[i]--; //on décrémente de 1
       }
-      else if (currentSensor[i] > smoothSensorsValues[i])
+      else if (currentSensor[i] > smoothSensorsValues[i]) // si la nouvelle valeur du capteur est supérieur a la dernière enregistrer,
       {
-        smoothSensorsValues[i]++;
+        smoothSensorsValues[i]++;//on incrémente de 1
       }
     }
 
-    printf("%d %d %d\n", smoothSensorsValues[0], smoothSensorsValues[1], smoothSensorsValues[2]);
-
+    if(DEBUG){
+      printf("%d %d %d\n", smoothSensorsValues[0], smoothSensorsValues[1], smoothSensorsValues[2]);
+    }
+  
+    //----------------------------------------------------------------------------
+    
     for (uint16_t y = 0; y < 128; y++)
     {
       for (uint16_t x = 0; x < 128; x++)
@@ -592,7 +601,7 @@ void DisplayAnimation(const FileInfo *file,
     offscreen_canvas = matrix->SwapOnVSync(offscreen_canvas,
                                            file->params.vsync_multiple);
 
-    SleepMillis(15 * (gifInfo.currentSpeed / 100));
+    SleepMillis( (15 * (100-gifInfo.currentSpeed)) / 100);
   }
 }
 
