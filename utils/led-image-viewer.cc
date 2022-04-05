@@ -925,12 +925,15 @@ int main(int argc, char *argv[])
     }
   }
 
+
   fprintf(stderr, "Loading took %.3fs; now: Display.\n",
           (GetTimeInMillis() - start_load) / 1000.0);
 
+
+  // signal pour fermer le programme
   signal(SIGTERM, InterruptHandler);
   signal(SIGINT, InterruptHandler);
-
+  //------------------------------------
   do
   {
 
@@ -939,7 +942,7 @@ int main(int argc, char *argv[])
     case 0: // GIF MODE
       DisplayAnimation(file_imgs[0], matrix, offscreen_canvas);
       break;
-    case 1:
+    case 1: //draw mode
 
     default:
       break;
