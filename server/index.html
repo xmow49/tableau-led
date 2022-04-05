@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+
+    <link rel='stylesheet' href='css/index.css'>
+    <link rel='stylesheet' href='css/customRadios.css'>
+
+    <link rel="stylesheet" href="dl/mdi/mdi.css" />
+    <link rel="stylesheet" href="dl/colorPicker/colorPicker.css" />
+    <meta name="viewport" content="minimal-ui, width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+</head>
+
+<body>
+
+    <header>
+        <h1>Matrice LED</h1>
+        <a href="settings.php"><button><span class="mdi mdi-cog"></span></button></a>
+    </header>
+
+    <div class="option-container">
+
+        <div class="option-item">
+            <h2>Choisissez une animation</h2>
+            <div class="animation-selector-container">
+                <label name="Animation 1" class="radio-container"><input type="radio" name="animation-selector" value="0" onclick="send.dataBuild();"checked><span class="radio-checkmark"></span></label>
+                <label name="Animation 2" class="radio-container"><input type="radio" name="animation-selector" value="1" onclick="send.dataBuild();"><span class="radio-checkmark"></span></label>
+                <label name="Animation 3" class="radio-container"><input type="radio" name="animation-selector" value="2" onclick="send.dataBuild();"><span class="radio-checkmark"></span></label>
+                <label name="Animation 4" class="radio-container"><input type="radio" name="animation-selector" value="3" onclick="send.dataBuild();"><span class="radio-checkmark"></span></label>
+            </div>
+
+
+
+
+        </div>
+
+        <div class="option-item">
+            <h2>Vitesse d'animation</h2>
+            <div class="option-content">
+                <div class="input-unit">
+                    <h4>0</h4>
+                    <h4>100</h4>
+                </div>
+                <input onchange="send.dataBuild();" type="range" id="animation-speed" min="0" max="100" value="50" step="5">
+
+            </div>
+
+        </div>
+
+        <div class="option-item">
+            <h2>Dessinez l'animation</h2>
+
+            <canvas width="128" height="128" id="drawing-canvas"></canvas>
+            <div class="drawing-option">
+                <button onclick="clearMatrix();">Effacer</button>
+                <button class="color-picker" id="color-picker">Color Picker</button>
+                <div class="color-picker-container"></div>
+            </div>
+            <div class="drawing-area" id="drawing-area">
+            </div>
+        </div>
+    </div>
+
+</body>
+<script src="dl/colorPicker/colorPicker.js"></script>
+<script src="js/draw.js"></script>
+<script src="js/drawOLD.js"></script>
+<script src="js/check.js"></script>
+<script src="js/index.js "></script>
+
+<!-- <script src="js/draw.js "></script> -->
+
+
+</html>

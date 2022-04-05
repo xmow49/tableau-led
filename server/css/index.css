@@ -1,0 +1,166 @@
+:root {
+    --separator-color: #606060;
+    --border-color: #000000;
+    --drawing-area-color: #000000;
+    --annimation-selector-border-size: 4px;
+    --content-width: 80%;
+}
+
+@font-face {
+    font-family: 'Open Sans';
+    src: url(../dl/fonts/OpenSans-Regular.ttf);
+}
+
+html {
+    overflow: hidden;
+    width: 100%;
+}
+
+body {
+    font-family: 'Open Sans';
+    margin: 0;
+}
+
+* {
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+}
+
+h1 {
+    text-align: center;
+}
+
+h2 {
+    margin: 5px;
+    font-size: 20px;
+}
+
+.option-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.option-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-top: 2px solid var(--border-color);
+    width: var(--content-width);
+}
+
+.option-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+header h1 {
+    background: no-repeat center/250px url(../img/header.webp);
+    margin: 5px;
+    margin-bottom: 5px;
+}
+
+header button {
+    position: absolute;
+    margin: 8px;
+    top: 0;
+    right: 0;
+    background: transparent;
+    border: none;
+    font-size: 2.4em;
+    cursor: pointer;
+}
+
+.animation-selector-container {
+    display: flex;
+    flex-direction: row;
+    height: 70px;
+}
+
+.input-unit {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: var(--content-width);
+}
+
+.input-unit h4 {
+    margin: 0;
+}
+
+.option-content input {
+    width: var(--content-width);
+    -webkit-appearance: none;
+    /*nécessaire pour Chrome */
+    padding: 0;
+    /* nécessaire pour IE */
+    font: inherit;
+    /* même rendu suivant font document */
+    outline: none;
+    color: #069;
+    /* sert pour couleur de référence, via currentColor, pour le curseur */
+    opacity: .8;
+    background: #CCC;
+    /* sert pour couleur de fond de la zone de déplacement */
+    box-sizing: border-box;
+    /* même modèle de boîte pour tous */
+    transition: opacity .2s;
+    cursor: pointer;
+}
+
+.drawing-area {
+    border: solid 2px var(--border-color);
+    background-color: var(--drawing-area-color);
+    /* display: none; */
+    /* temp value: resize un js */
+    /* width: 100px;
+    height: 100px; */
+}
+
+#drawing-canvas {
+    border: solid 2px var(--border-color);
+    background-color: var(--drawing-area-color);
+}
+
+.drawing-area .row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+}
+
+.drawing-area .cell {
+    /* width: 4px;
+    height: 4px; */
+}
+
+.drawing-option {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+
+/* color picker button  */
+
+.pcr-button {
+    border: solid 2px black !important;
+}
+
+.color-picker-cutom {
+    position: relative !important;
+    top: unset !important;
+    left: unset !important;
+    width: 150px;
+}
