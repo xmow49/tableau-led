@@ -37,14 +37,14 @@ using rgb_matrix::StreamReader;
 
 #include <wiringPi.h>
 
-#define MAX_DISTANCE 150 // cm
+#define MAX_DISTANCE 200 // cm
 bool DEBUG = false;
 int SensorMesures[3] = {0, 0, 0};
-unsigned int currentSensor = 0;
+unsigned int currentSensor[3] = {0, 0, 0};
 
 unsigned char currentMode = 0; // 0: GIF - 1: DRAW
 
-#define FILTRE 0
+#define FILTRE 1
 
 //--------- Custom LED Matrix Struct----------
 struct MatrixLedData
@@ -59,7 +59,7 @@ struct MatrixFrameBuffer
 };
 struct MatrixAnimationBuffer
 {
-  MatrixFrameBuffer animation[500];
+  MatrixFrameBuffer animation[400];
   uint16_t currentGifFrameCount = 0;
 };
 
@@ -300,13 +300,13 @@ void checkIPCFile()
 //--------- Ultrasonic Sensor ----------
 
 // pins
-const unsigned char sensorsPins[3] = {8, 8, 9}; // https://fr.pinout.xyz/pinout/wiringpi //25 8 9
+int smoothSensorsValues[3] = {100, 100, 100};
+const unsigned char sensorsPins[3] = {8, 9, 25}; // https://fr.pinout.xyz/pinout/wiringpi //25 8 9
 
 int getSensor(unsigned char nSensor, int minDistance = 5, int maxDistance = 300) // sensor n° 0 1 2
 {
   if (nSensor > 2)
   {
-    currentSensor = -1;
     return -1;
   }
 
@@ -340,7 +340,7 @@ int getSensor(unsigned char nSensor, int minDistance = 5, int maxDistance = 300)
     if (DEBUG)
     {
       printf("Out of range.\n");
-      currentSensor = -1;
+      currentSensor[nSensor] = -1;
       return -1;
     }
   }
@@ -357,7 +357,7 @@ int getSensor(unsigned char nSensor, int minDistance = 5, int maxDistance = 300)
     if (DEBUG)
     {
       printf("Out of range.\n");
-      currentSensor = -1;
+      currentSensor[nSensor] = -1;
       return -1;
     }
   }
@@ -372,7 +372,7 @@ int getSensor(unsigned char nSensor, int minDistance = 5, int maxDistance = 300)
     if (DEBUG)
     {
       printf("Out of range.\n");
-      currentSensor = -1;
+      currentSensor[nSensor] = -1;
       return -1;
     }
   }
@@ -386,24 +386,33 @@ int getSensor(unsigned char nSensor, int minDistance = 5, int maxDistance = 300)
     distance = minDistance;
   }
 
-  currentSensor = distance;
+  currentSensor[nSensor] = distance;
 
   return distance;
 }
 
-void sensorLoop(unsigned char nSensor, int minDistance = 5, int maxDistance = 300)
+void sensorLoop(int minDistance = 5, int maxDistance = 300)
 {
   while (1)
   {
-    getSensor(nSensor, minDistance, maxDistance);
-    SleepMillis(100);
+    getSensor(0, minDistance, maxDistance);
+    SleepMillis(20);
+    getSensor(1, minDistance, maxDistance);
+    SleepMillis(20);
+    getSensor(2, minDistance, maxDistance);
+    SleepMillis(20);
+    // printf("%d %d %d\n", currentSensor[0], currentSensor[1], currentSensor[2]);
   }
 }
 
-unsigned char fixBlack(unsigned char value){
-  if(value < 5){
+unsigned char fixBlack(unsigned char value)
+{
+  if (value < 5)
+  {
     return 0;
-  }else{
+  }
+  else
+  {
     return value;
   }
 }
@@ -540,10 +549,22 @@ void DisplayAnimation(const FileInfo *file,
   uint32_t delay_us = 0;
   int sensor = -1;
   int moyenne = 0;
+
   for (uint16_t frame = 0; (frame < matrixGifsList[gifInfo.currentGIF].currentGifFrameCount - 1) && !interrupt_received; frame++)
   {
+    for (int i = 0; i < 3; i++)
+    {
+      if (currentSensor[i] < smoothSensorsValues[i])
+      {
+        smoothSensorsValues[i]--;
+      }
+      else if (currentSensor[i] > smoothSensorsValues[i])
+      {
+        smoothSensorsValues[i]++;
+      }
+    }
 
-    //printf("sensor: %d\n", currentSensor);
+    printf("%d %d %d\n", smoothSensorsValues[0], smoothSensorsValues[1], smoothSensorsValues[2]);
 
     for (uint16_t y = 0; y < 128; y++)
     {
@@ -551,17 +572,20 @@ void DisplayAnimation(const FileInfo *file,
       {
         if (FILTRE)
         {
+
           offscreen_canvas->SetPixel(x, y,
-                                     map(currentSensor, 5, MAX_DISTANCE, 0, 255) * (matrixGifsList[gifInfo.currentGIF].animation[frame].buffer[y][x].red) / 255,
-                                     map(currentSensor, 5, MAX_DISTANCE, 0, 200) * (matrixGifsList[gifInfo.currentGIF].animation[frame].buffer[y][x].green) / 255,
-                                     map(currentSensor, 5, MAX_DISTANCE, 255, 0) * (matrixGifsList[gifInfo.currentGIF].animation[frame].buffer[y][x].blue) / 255);
+                                     map(smoothSensorsValues[0], 5, MAX_DISTANCE, 255, 20) * matrixGifsList[gifInfo.currentGIF].animation[frame].buffer[y][x].red / 255,
+                                     map(smoothSensorsValues[1], 5, MAX_DISTANCE, 255, 20) * matrixGifsList[gifInfo.currentGIF].animation[frame].buffer[y][x].green / 255,
+                                     map(smoothSensorsValues[2], 5, MAX_DISTANCE, 255, 20) * matrixGifsList[gifInfo.currentGIF].animation[frame].buffer[y][x].blue / 255);
           // offscreen_canvas->SetPixel(x, y, 255,255,255);
+          // printf("before:%d after:%d\n", matrixGifsList[gifInfo.currentGIF].animation[frame].buffer[y][x].red, map(currentSensor[0], 5, MAX_DISTANCE, 0, 255) * matrixGifsList[gifInfo.currentGIF].animation[frame].buffer[y][x].red / 255);
         }
-        else {
+        else
+        {
           offscreen_canvas->SetPixel(x, y,
-                                   matrixGifsList[gifInfo.currentGIF].animation[frame].buffer[y][x].red,
-                                   matrixGifsList[gifInfo.currentGIF].animation[frame].buffer[y][x].green,
-                                   matrixGifsList[gifInfo.currentGIF].animation[frame].buffer[y][x].blue);
+                                     matrixGifsList[gifInfo.currentGIF].animation[frame].buffer[y][x].red,
+                                     matrixGifsList[gifInfo.currentGIF].animation[frame].buffer[y][x].green,
+                                     matrixGifsList[gifInfo.currentGIF].animation[frame].buffer[y][x].blue);
         }
       }
     }
@@ -599,7 +623,7 @@ int main(int argc, char *argv[])
 
   wiringPiSetup(); // setup pins
 
-  std::thread CheckSensor(sensorLoop, 0, 5, 200); // thread to check sensor
+  std::thread CheckSensor(sensorLoop, 5, 200); // thread to check sensor
 
   std::thread CheckIPC(checkIPCFile); // thread to check if there is a new content in file
 
