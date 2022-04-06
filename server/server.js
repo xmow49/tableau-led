@@ -13,6 +13,7 @@ app.use(express.static('./'));
 app.use(bodyParser.urlencoded({ extended: true }));
 
 var jsonparser = bodyParser.json()
+var textparser = bodyParser.text()
 
 const folderName = '/tmp/matrix'
 try {
@@ -34,8 +35,22 @@ app.post('/post', jsonparser, (req, res) => {
     } catch (err) {
         console.error(err)
     }
-
 });
+
+
+app.post('/draw', textparser, (req, res) => {
+  console.log("getting draw request");
+  res.sendStatus(200);
+  console.log(req.body);
+  try {
+    
+      fs.writeFileSync(folderName + '/DRAW', req.body)
+          //file written successfully
+  } catch (err) {
+      console.error(err)
+  }
+});
+
 
 var server = app.listen(8000);
 

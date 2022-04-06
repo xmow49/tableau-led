@@ -36,7 +36,7 @@ function setPixelMatrix(x, y) {
     if (cellID < matrixSize * matrixSize && cellID >= 0) {
         // document.getElementById('cell-' + cellID).style.backgroundColor = drawingColor;
         matrixPixels[cellID] = hexToRGB(drawingColor);
-        pixelToSend.push(cellID);
+        pixelToSend[cellID] = cellID; //éviter les doublons
         // console.log("matrixPixels[" + cellID + "] = " + matrixPixels[cellID]);
     }
 

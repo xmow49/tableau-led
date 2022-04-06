@@ -60,38 +60,43 @@ class send {
 
 
         if (send.mode() == "DRAW") {
-            dataJSON.LEDS = [];
-
-            for (var i = 0; i < pixelToSend.length; i++) {
-                var x = pixelToSend[i] % matrixSize;
-                var y = Math.floor(pixelToSend[i] / matrixSize);
-                var toSend = {
-                    X: x,
-                    Y: y,
-                    C: matrixPixels[pixelToSend[i]]
+            console.log(pixelToSend);
+            var pixelToSendOrdered = [];
+            for(var i = 0; i < pixelToSend.length; i++) {
+                if(pixelToSend[i] != null) {
+                    pixelToSendOrdered.push(pixelToSend[i]);
                 }
-                dataJSON.LEDS.push(toSend);
-
-
-                // tempMatrix[[y], [x]] = matrixPixels[pixelToSend[i]];
-                // data.LEDS[] = [];
-                // data += x + "-" + y + ":" + matrixPixels[pixelToSend[i]].join(';') + ",";
             }
+
+
+            console.log(pixelToSendOrdered);
+
+            dataJSON.COLOR = hexToRGB(drawingColor);
+            dataJSON.LEDS = pixelToSendOrdered;
+            console.log(dataJSON);
             pixelToSend = [];
 
 
         } else if (send.mode() == "GIF") {
             dataJSON.GIF = send.buttonValue();
             dataJSON.SPEED = send.animationSpeed();
-            // data = send.mode() + "," + send.buttonValue() + "," + send.animationSpeed();s
+            console.log(dataJSON);
+            
         }
 
-        console.log(dataJSON);
         postMsg(dataJSON);
+
     }
 
 }
 
+
+function dec2bin(dec) {
+    return (dec >>> 0).toString(2);
+}
+const equals = (a, b) =>
+    a.length === b.length &&
+    a.every((v, i) => v === b[i]);
 
 // Sends message to server via POST
 function postMsg(data) {
@@ -102,6 +107,17 @@ function postMsg(data) {
         // Format of the body must match the Content-Type
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data)
+    });
+}
+
+function drawMsg(data) {
+
+    // Creates a promise object for sending the desired data
+    fetch(window.location.href + 'draw', {
+        method: "POST",
+        // Format of the body must match the Content-Type
+        headers: { "Content-Type": "text/plain" },
+        body: data
     });
 }
 
