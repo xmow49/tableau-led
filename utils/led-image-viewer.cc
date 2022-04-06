@@ -1,3 +1,4 @@
+//----------------------- Déclarations des library -------------------------
 #include "led-matrix.h"
 #include "pixel-mapper.h"
 #include "content-streamer.h"
@@ -29,24 +30,19 @@
 #include <fstream>
 
 #include <nlohmann/json.hpp> //sudo apt-get install nlohmann-json-dev
+
+#include <wiringPi.h>
+//-----------------------------------------------------------------------------
+
+//----------------------- Déclarations des namespaces -------------------------
 using json = nlohmann::json;
 using rgb_matrix::Canvas;
 using rgb_matrix::FrameCanvas;
 using rgb_matrix::RGBMatrix;
 using rgb_matrix::StreamReader;
+//-----------------------------------------------------------------------------
 
-#include <wiringPi.h>
-
-#define MAX_DISTANCE 200 // cm
-bool DEBUG = false;
-int SensorMesures[3] = {0, 0, 0};
-unsigned int currentSensor[3] = {0, 0, 0};
-
-unsigned char currentMode = 0; // 0: GIF - 1: DRAW
-
-#define FILTRE 1
-
-//--------- Custom LED Matrix Struct----------
+//--------- Déclarations des  structures --------------------------------------
 struct MatrixLedData
 {
   uint8_t red;
@@ -75,6 +71,20 @@ struct GifInfo
   uint8_t currentSpeed = 100;
 };
 
+//-----------------------------------------------------------------------------
+
+//----------------------- Déclarations des variables globales / config --------
+#define MAX_DISTANCE 200 // cm
+bool DEBUG = false;
+int SensorMesures[3] = {0, 0, 0};
+unsigned int currentSensor[3] = {0, 0, 0};
+int smoothSensorsValues[3] = {100, 100, 100};
+const unsigned char sensorsPins[3] = {8, 9, 25}; // https://fr.pinout.xyz/pinout/wiringpi //25 8 9
+
+unsigned char currentMode = 0; // 0: GIF - 1: DRAW
+
+#define FILTRE 1
+
 MatrixAnimationBuffer matrixGifsList[10];
 GifInfo gifInfo;
 // MatrixDrawBuffer matrixDraw;
@@ -86,7 +96,12 @@ uint16_t test = 0;
 #define IPC_PATH "/tmp/matrix"
 #define IPC_FILE "IPC"
 #define IPC_ALL IPC_PATH "/" IPC_FILE
-//--------- LED Matrix Struct from Lib ----------
+
+volatile bool interrupt_received = false;
+
+//-----------------------------------------------------------------------------
+
+//------------------ LED Matrix Struct from Lib --------------------------------
 typedef int64_t tmillis_t;
 static const tmillis_t distant_future = (1LL << 40); // that is a while.
 
@@ -107,7 +122,7 @@ struct FileInfo
   rgb_matrix::StreamIO *content_stream;
 };
 
-volatile bool interrupt_received = false;
+//-----------------------------------------------------------------------------
 
 static void InterruptHandler(int signo)
 {
@@ -146,11 +161,8 @@ std::string split(const std::string &chaine, char delimiteur, char index)
   return "";
 }
 
-//----------- File between c and php ------------
-
-void checkIPCFile()
+void checkIPCFile() // File between c and web interface
 {
-
   while (1)
   {
     //---- variables ----
@@ -218,39 +230,8 @@ void checkIPCFile()
                 printf("SPEED: %s\n", speed.c_str());
                 gifInfo.currentSpeed = atoi(speed.c_str()); // applique le changement
                 printf("currentSpeed: %d\n", gifInfo.currentSpeed);
-
               }
 
-              // if (key == "TO")
-              // {
-              //   if (value == "CPP")
-              //   {
-              //     printf("ITS for me\n");
-              //   }
-              //   else
-              //   {
-              //     interupt = true;
-              //   }
-              // }
-              // else if (key == "MODE")
-              // {
-              //   if (value == "GIF")
-              //   {
-              //     printf("GIF MODE\n");
-              //     currentMode = 0;
-              //   }
-
-              //   else if (value == "DRAW")
-              //   {
-              //     printf("DRAW MODE\n");
-              //     currentMode = 1;
-              //   }
-              // }
-              // else if (key == "GIF")
-              // {
-              //   gifInfo.currentGIF = atoi(value.c_str());
-              //   printf("GIF %s\n", value.c_str());
-              // }
               // else if (key == "LED")
               // {
               //   // std::string strLed = value.substr(0, value.find(':'));
@@ -299,18 +280,10 @@ void checkIPCFile()
   }
 }
 
-//--------- Ultrasonic Sensor ----------
-
-// pins
-int smoothSensorsValues[3] = {100, 100, 100};
-const unsigned char sensorsPins[3] = {8, 9, 25}; // https://fr.pinout.xyz/pinout/wiringpi //25 8 9
-
-int getSensor(unsigned char nSensor, int minDistance = 5, int maxDistance = 300) // sensor n° 0 1 2
+int getSensor(unsigned char nSensor, int minDistance = 5, int maxDistance = 300) // récupère la valeur d'un capeur en foncion de nsensor n° 0 1 2
 {
   if (nSensor > 2)
-  {
     return -1;
-  }
 
   long ping = 0;
   long pong = 0;
@@ -393,7 +366,7 @@ int getSensor(unsigned char nSensor, int minDistance = 5, int maxDistance = 300)
   return distance;
 }
 
-void sensorLoop(int minDistance = 5, int maxDistance = 300)
+void sensorLoop(int minDistance = 5, int maxDistance = 300) // loop qui check les sensor dans un thread parallèle
 {
   while (1)
   {
@@ -407,7 +380,7 @@ void sensorLoop(int minDistance = 5, int maxDistance = 300)
   }
 }
 
-unsigned char fixBlack(unsigned char value)
+unsigned char fixBlack(unsigned char value) // met un offset pour la couleur noir du gif: évite les LED semis allumé avec le fond noir
 {
   if (value < 5)
   {
@@ -419,10 +392,15 @@ unsigned char fixBlack(unsigned char value)
   }
 }
 
+int map(long x, long in_min, long in_max, long out_min, long out_max) //fonction map qui sert pour les valeurs des sensors de 5cm --> 200cm to 0 --> 255
+{
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
 static void StoreInStream(const Magick::Image &img, int delay_time_us,
                           bool do_center,
                           rgb_matrix::FrameCanvas *scratch,
-                          rgb_matrix::StreamWriter *output)
+                          rgb_matrix::StreamWriter *output) //récupère les gif et les stock dans la structure + met dans un canvas (qui viens de la library, mais pas utiliser) 
 {
   scratch->Clear();
   const int x_offset = do_center ? (scratch->width() - img.columns()) / 2 : 0;
@@ -452,7 +430,7 @@ static void StoreInStream(const Magick::Image &img, int delay_time_us,
 
 static void CopyStream(rgb_matrix::StreamReader *r,
                        rgb_matrix::StreamWriter *w,
-                       rgb_matrix::FrameCanvas *scratch)
+                       rgb_matrix::FrameCanvas *scratch) //jsp a quoi ca sert, mais la lib a besoin de ca
 {
   uint32_t delay_us;
   while (r->GetNext(scratch, &delay_us))
@@ -467,7 +445,7 @@ static bool LoadImageAndScale(const char *filename,
                               int target_width, int target_height,
                               bool fill_width, bool fill_height,
                               std::vector<Magick::Image> *result,
-                              std::string *err_msg)
+                              std::string *err_msg) //resize les gif
 {
   std::vector<Magick::Image> frames;
   try
@@ -532,13 +510,10 @@ static bool LoadImageAndScale(const char *filename,
   return true;
 }
 
-int map(long x, long in_min, long in_max, long out_min, long out_max)
-{
-  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-}
+
 
 void DisplayAnimation(const FileInfo *file,
-                      RGBMatrix *matrix, FrameCanvas *offscreen_canvas)
+                      RGBMatrix *matrix, FrameCanvas *offscreen_canvas) //fonction appeler pour afficher les gif en mode normal
 {
   const tmillis_t duration_ms = (file->is_multi_frame
                                      ? file->params.anim_duration_ms
@@ -555,26 +530,26 @@ void DisplayAnimation(const FileInfo *file,
   for (uint16_t frame = 0; (frame < matrixGifsList[gifInfo.currentGIF].currentGifFrameCount - 1) && !interrupt_received; frame++)
   {
 
-    
     //-------------------Gestion des transition fluides ------------------------
     for (int i = 0; i < 3; i++)
     {
-      if (currentSensor[i] < smoothSensorsValues[i])// si la nouvelle valeur du capteur est inférieur a la dernière enregistrer,
+      if (currentSensor[i] < smoothSensorsValues[i]) // si la nouvelle valeur du capteur est inférieur a la dernière enregistrer,
       {
-        smoothSensorsValues[i]--; //on décrémente de 1
+        smoothSensorsValues[i]--; // on décrémente de 1
       }
       else if (currentSensor[i] > smoothSensorsValues[i]) // si la nouvelle valeur du capteur est supérieur a la dernière enregistrer,
       {
-        smoothSensorsValues[i]++;//on incrémente de 1
+        smoothSensorsValues[i]++; // on incrémente de 1
       }
     }
 
-    if(DEBUG){
+    if (DEBUG)
+    {
       printf("%d %d %d\n", smoothSensorsValues[0], smoothSensorsValues[1], smoothSensorsValues[2]);
     }
-  
+
     //----------------------------------------------------------------------------
-    
+
     for (uint16_t y = 0; y < 128; y++)
     {
       for (uint16_t x = 0; x < 128; x++)
@@ -601,11 +576,13 @@ void DisplayAnimation(const FileInfo *file,
     offscreen_canvas = matrix->SwapOnVSync(offscreen_canvas,
                                            file->params.vsync_multiple);
 
-    SleepMillis( (15 * (100-gifInfo.currentSpeed)) / 100);
+    SleepMillis((15 * (100 - gifInfo.currentSpeed)) / 100);
   }
 }
 
-static int usage(const char *progname) // command usage
+
+
+static int usage(const char *progname) // fontion qui retourne la page d'aide, mais elle sert plus a grand chose, jai tous enlever pour simpifier le code
 {
   fprintf(stderr, "usage: %s [options] <image> [option] [<image> ...]\n",
           progname);
@@ -630,11 +607,11 @@ static int usage(const char *progname) // command usage
 int main(int argc, char *argv[])
 {
 
-  wiringPiSetup(); // setup pins
+  wiringPiSetup(); // initialisation des GPIO
 
-  std::thread CheckSensor(sensorLoop, 5, 200); // thread to check sensor
+  std::thread CheckSensor(sensorLoop, 5, 200); // thread qui va lire les capteurs
 
-  std::thread CheckIPC(checkIPCFile); // thread to check if there is a new content in file
+  std::thread CheckIPC(checkIPCFile); // thread qui va lire le fichiers IPC pour la communication avec l'interface web
 
   Magick::InitializeMagick(*argv); // Initialize ImageMagick
 
@@ -925,10 +902,8 @@ int main(int argc, char *argv[])
     }
   }
 
-
   fprintf(stderr, "Loading took %.3fs; now: Display.\n",
           (GetTimeInMillis() - start_load) / 1000.0);
-
 
   // signal pour fermer le programme
   signal(SIGTERM, InterruptHandler);
@@ -942,7 +917,7 @@ int main(int argc, char *argv[])
     case 0: // GIF MODE
       DisplayAnimation(file_imgs[0], matrix, offscreen_canvas);
       break;
-    case 1: //draw mode
+    case 1: // draw mode
 
     default:
       break;

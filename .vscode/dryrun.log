@@ -1,11 +1,4 @@
-make -f /home/pi/matrix/utils/Makefile --dry-run --always-make --keep-going --print-directory
-make: Entering directory '/home/pi/matrix'
-make -C ../lib
-make[1]: Entering directory '/home/pi/matrix'
-make[1]: Leaving directory '/home/pi/matrix'
-make: Leaving directory '/home/pi/matrix'
- 
-make: *** No rule to make target 'led-image-viewer.cc', needed by 'led-image-viewer.o'.
-make[1]: *** ../lib: No such file or directory.  Stop.
-make: *** [/home/pi/matrix/utils/Makefile:30: ../lib/librgbmatrix.a] Error 2
+make.exe -f d:\04 - GEII\SAE IP\Fimware\local_copy\tableau-led\utils\Makefile --dry-run --always-make --keep-going --print-directory
+'make.exe' is not recognized as an internal or external command,
+operable program or batch file.
 
