@@ -93,6 +93,7 @@ function stopPainting() {
 
 function clearMatrix() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    send.clearDraw();
 }
 
 

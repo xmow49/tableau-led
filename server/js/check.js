@@ -52,13 +52,21 @@ class send {
         return animationSpeed;
     }
 
+    static clearDraw(){
+        dataJSON = {
+            TO: 'CPP',
+            MODE: "DRAW",
+            DRAW: 'CLEAR'
+        };
+        postMsg(dataJSON);
+
+    }
+
     static dataBuild() {
         dataJSON = {
             TO: 'CPP',
             MODE: send.mode()
         };
-
-
         if (send.mode() == "DRAW") {
             //console.log(pixelToSend);
             var pixelToSendOrdered = [];
@@ -67,8 +75,6 @@ class send {
                     pixelToSendOrdered.push(pixelToSend[i]);
                 }
             }
-
-
             //console.log(pixelToSendOrdered);
 
             dataJSON.COLOR = hexToRGB(drawingColor);

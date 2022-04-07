@@ -79,6 +79,9 @@ MatrixAnimationBuffer matrixGifsList[6];
 GifInfo gifInfo;
 volatile bool interrupt_received = false;
 
+int fd;
+int wd;
+
 //-----------------------------------------------------------------------------
 
 //------------------ LED Matrix Struct from Lib --------------------------------
@@ -141,29 +144,30 @@ std::string split(const std::string &chaine, char delimiteur, char index)
   return "";
 }
 
+bool jsonKeyExists(const json& j, const std::string& key)
+{
+    return j.find(key) != j.end();
+}
+
 void checkIPCFile() // File between c and web interface
 {
+  //---- variables ----
+  int length, i = 0;
+  char buffer[BUF_LEN];
+  //-------------------
+  fd = inotify_init(); // init file lisen
+  // if (fd < 0) // check if init is ok
+  //   printf("inotify_init\n");
 
-    //---- variables ----
-    int length, i = 0;
-    int fd;
-    int wd;
-    char buffer[BUF_LEN];
-    //-------------------
-    fd = inotify_init(); // init file lisen
+  wd = inotify_add_watch(fd, IPC_PATH, IN_MODIFY | IN_CREATE | IN_DELETE); // setup watch event
 
-    // if (fd < 0) // check if init is ok
-    //   printf("inotify_init\n");
-
-    wd = inotify_add_watch(fd, IPC_PATH, IN_MODIFY | IN_CREATE | IN_DELETE); // setup watch event
-    length = read(fd, buffer, BUF_LEN);
-
-    // if (length < 0)
-    //   printf("read\n");
-
+  // if (length < 0)
+  //   printf("read\n");
 
   while (1)
   {
+    i = 0;
+    length = read(fd, buffer, BUF_LEN);
 
     if (i < length)
     {
@@ -176,6 +180,7 @@ void checkIPCFile() // File between c and web interface
           // printf("The file %s was modified.\n", event->name);
           if (strcmp(event->name, IPC_FILE) == 0) // if its the matrix temp file
           {
+            //printf("Info: i:%d; length:%d\n", i, length);
             printf("New event from web interface\n");
 
             // Create a text string, which is used to output the text file
@@ -205,6 +210,9 @@ void checkIPCFile() // File between c and web interface
               if (mode == "GIF")
               {
                 printf("ITS a GIF\n");
+
+                gifInfo.filterEnable = true; // active le filtre
+
                 std::string gif = j_complete["GIF"];
                 gifInfo.currentGIF = atoi(gif.c_str()); // applique le changement
 
@@ -214,27 +222,44 @@ void checkIPCFile() // File between c and web interface
               }
               else if (mode == "DRAW")
               {
-
-                gifInfo.currentGIF = 5;                     // draw mode
-                gifInfo.filterEnable = false;               // enlève le filtre de couleur
-                matrixGifsList[5].currentGifFrameCount = 2; // gif de 2 frame
-
-                
-
-                vector<int> color = j_complete["COLOR"];
-                vector<int> leds = j_complete["LEDS"];
-                std::cout << leds.size() << '\n';
-                for (uint8_t i = 0; i < leds.size(); i++) // pour chaque led
+                if (jsonKeyExists(j_complete, "DRAW"))
                 {
-                  int y = leds.at(i) / 128;
-                  int x = leds.at(i) % 128;
-                  // printf("LED: X:%d Y:%d\n", x, y);
-                  matrixGifsList[5].animation[0].buffer[y][x].red = color.at(0);
-                  matrixGifsList[5].animation[0].buffer[y][x].green = color.at(1);
-                  matrixGifsList[5].animation[0].buffer[y][x].blue = color.at(2);
+                  if (j_complete["DRAW"] == "CLEAR")
+                  {
+                    // clear matrix
+                    printf("Clearing the matrix...\n");
+                    for (uint8_t y = 0; y < 128; y++)
+                    {
+                      for (uint8_t x = 0; x < 128; x++)
+                      {
+                        matrixGifsList[5].animation[0].buffer[y][x].red = 0;
+                        matrixGifsList[5].animation[0].buffer[y][x].green = 0;
+                        matrixGifsList[5].animation[0].buffer[y][x].blue = 0;
+                      }
+                    }
+                  }
+                }
+
+                else
+                {
+                  gifInfo.currentGIF = 5;                     // draw mode
+                  gifInfo.filterEnable = false;               // enlève le filtre de couleur
+                  matrixGifsList[5].currentGifFrameCount = 2; // gif de 2 frame
+
+                  vector<int> color = j_complete["COLOR"];
+                  vector<int> leds = j_complete["LEDS"];
+                  std::cout << leds.size() << '\n';
+                  for (uint8_t i = 0; i < leds.size(); i++) // pour chaque led
+                  {
+                    int y = leds.at(i) / 128;
+                    int x = leds.at(i) % 128;
+                    // printf("LED: X:%d Y:%d\n", x, y);
+                    matrixGifsList[5].animation[0].buffer[y][x].red = color.at(0);
+                    matrixGifsList[5].animation[0].buffer[y][x].green = color.at(1);
+                    matrixGifsList[5].animation[0].buffer[y][x].blue = color.at(2);
+                  }
                 }
               }
-
             }
 
             // FileIN.clear();
@@ -266,10 +291,9 @@ void checkIPCFile() // File between c and web interface
       }
       i += EVENT_SIZE + event->len;
     }
-    i = 0;
+    // i = 0;
   }
 }
-
 
 int getSensor(unsigned char nSensor, int minDistance = 5, int maxDistance = 300) // récupère la valeur d'un capeur en foncion de nsensor n° 0 1 2
 {
@@ -611,6 +635,8 @@ int main(int argc, char *argv[])
   matrix_options.pwm_bits = 11;
   matrix_options.pwm_lsb_nanoseconds = 50;
 
+  matrix_options.disable_hardware_pulsing = true;
+
   //-------------------------------------
 
   rgb_matrix::RuntimeOptions runtime_opt;
@@ -894,8 +920,8 @@ int main(int argc, char *argv[])
   //------------------------------------
   do
   {
-      DisplayAnimation(file_imgs[0], matrix, offscreen_canvas);
-      
+    DisplayAnimation(file_imgs[0], matrix, offscreen_canvas);
+
   } while (!interrupt_received);
 
   if (interrupt_received)
@@ -910,6 +936,9 @@ int main(int argc, char *argv[])
 
   CheckSensor.detach();
   CheckIPC.detach();
+
+  inotify_rm_watch(fd, wd);
+  close(fd);
 
   return 0;
 }

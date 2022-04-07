@@ -17,40 +17,37 @@ var textparser = bodyParser.text()
 
 const folderName = '/tmp/matrix'
 try {
-    if (!fs.existsSync(folderName)) {
-      fs.mkdirSync(folderName)
-    }
-  } catch (err) {
-    console.error(err)
+  // create the folder
+  if (!fs.existsSync(folderName)) {
+    fs.mkdirSync(folderName)
   }
 
+  //create the file
+  fs.open(folderName + "/IPC", 'w', function (err, file) {
+    if (err) throw err;
+    console.log('Saved!');
+  });
+
+  //file permision 777
+  fs.chmod(folderName + "/IPC", 0777, (err) => {
+    //if error
+  }); 
+
+} catch (err) {
+  console.error(err)
+}
 
 
 app.post('/post', jsonparser, (req, res) => {
-    console.log("New data received");
-    res.sendStatus(200);
-    try {
-        fs.writeFileSync(folderName + '/IPC', JSON.stringify(req.body))
-            //file written successfully
-    } catch (err) {
-        console.error(err)
-    }
-});
-
-
-app.post('/draw', textparser, (req, res) => {
-  console.log("getting draw request");
+  console.log("New data received");
   res.sendStatus(200);
-  console.log(req.body);
   try {
-    
-      fs.writeFileSync(folderName + '/DRAW', req.body)
-          //file written successfully
+    fs.writeFileSync(folderName + '/IPC', JSON.stringify(req.body))
+    //file written successfully
   } catch (err) {
-      console.error(err)
+    console.error(err)
   }
 });
-
 
 var server = app.listen(8000);
 

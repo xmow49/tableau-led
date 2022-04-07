@@ -1,1 +1,1 @@
-make && sudo ./led-image-viewer ./gifs/loading.gif
+make && sudo ./matrix ./gifs/loading.gif
