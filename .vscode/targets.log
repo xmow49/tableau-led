@@ -1,4 +1,0 @@
-make.exe all -f d:\04 - GEII\SAE IP\Fimware\local_copy\tableau-led\utils\Makefile --print-data-base --no-builtin-variables --no-builtin-rules --question
-'make.exe' is not recognized as an internal or external command,
-operable program or batch file.
-
