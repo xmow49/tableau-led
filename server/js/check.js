@@ -36,7 +36,7 @@ class send {
             mode = "DRAW";
         else
             mode = "GIF";
-        console.log(mode);
+        //console.log(mode);
         return mode;
     }
 
@@ -60,7 +60,7 @@ class send {
 
 
         if (send.mode() == "DRAW") {
-            console.log(pixelToSend);
+            //console.log(pixelToSend);
             var pixelToSendOrdered = [];
             for(var i = 0; i < pixelToSend.length; i++) {
                 if(pixelToSend[i] != null) {
@@ -69,22 +69,29 @@ class send {
             }
 
 
-            console.log(pixelToSendOrdered);
+            //console.log(pixelToSendOrdered);
 
             dataJSON.COLOR = hexToRGB(drawingColor);
             dataJSON.LEDS = pixelToSendOrdered;
-            console.log(dataJSON);
+            
             pixelToSend = [];
+            if(pixelToSendOrdered.length == 0){
+
+            }else{
+                console.log(dataJSON);
+                postMsg(dataJSON);
+            }
+            
 
 
         } else if (send.mode() == "GIF") {
             dataJSON.GIF = send.buttonValue();
             dataJSON.SPEED = send.animationSpeed();
             console.log(dataJSON);
+            postMsg(dataJSON);
             
         }
-
-        postMsg(dataJSON);
+        
 
     }
 

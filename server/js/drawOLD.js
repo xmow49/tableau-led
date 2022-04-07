@@ -77,18 +77,18 @@ function startPainting(event) {
         send.dataBuild();
         if (!drawing) clearInterval(sendDrawInterval);
 
-    }, 500);
+    }, 20);
 }
 
 function stopPainting() {
     paint = false;
-    clearInterval(sendDrawInterval);
-    window.setTimeout(function() { //au bout de 15 secondes, on depasse en mode gif
-        drawing = false;
-        console.log("stop");
-        send.dataBuild();
-        clearInterval(sendDrawInterval);
-    }, 5000);
+    // clearInterval(sendDrawInterval);
+    // window.setTimeout(function() { //au bout de 15 secondes, on depasse en mode gif
+    //     drawing = false;
+    //     console.log("stop");
+    //     send.dataBuild();
+    //     clearInterval(sendDrawInterval);
+    // }, 10000);
 }
 
 function clearMatrix() {

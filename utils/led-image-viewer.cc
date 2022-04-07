@@ -158,8 +158,7 @@ std::string split(const std::string &chaine, char delimiteur, char index)
 
 void checkIPCFile() // File between c and web interface
 {
-  while (1)
-  {
+
     //---- variables ----
     int length, i = 0;
     int fd;
@@ -168,14 +167,18 @@ void checkIPCFile() // File between c and web interface
     //-------------------
     fd = inotify_init(); // init file lisen
 
-    if (fd < 0) // check if init is ok
-      printf("inotify_init\n");
+    // if (fd < 0) // check if init is ok
+    //   printf("inotify_init\n");
 
     wd = inotify_add_watch(fd, IPC_PATH, IN_MODIFY | IN_CREATE | IN_DELETE); // setup watch event
     length = read(fd, buffer, BUF_LEN);
 
-    if (length < 0)
-      printf("read\n");
+    // if (length < 0)
+    //   printf("read\n");
+
+
+  while (1)
+  {
 
     if (i < length)
     {
@@ -205,7 +208,7 @@ void checkIPCFile() // File between c and web interface
               std::string to = j_complete["TO"];
               if (to == "CPP")
               {
-                printf("ITS for me\n");
+                // printf("ITS for me\n");
               }
               else
               {
@@ -218,41 +221,35 @@ void checkIPCFile() // File between c and web interface
               {
                 printf("ITS a GIF\n");
                 std::string gif = j_complete["GIF"];
-                printf("GIF: %s\n", gif.c_str());
                 gifInfo.currentGIF = atoi(gif.c_str()); // applique le changement
 
                 std::string speed = j_complete["SPEED"];
-                printf("SPEED: %s\n", speed.c_str());
                 gifInfo.currentSpeed = atoi(speed.c_str()); // applique le changement
                 printf("currentSpeed: %d\n", gifInfo.currentSpeed);
               }
               else if (mode == "DRAW")
               {
-                printf("ITS a DRAW\n");
 
-                // unsigned int color[] = j_complete["COLOR"];
-                std::cout << j_complete["COLOR"] << '\n';
+                gifInfo.currentGIF = 5;                     // draw mode
+                gifInfo.filterEnable = false;               // enlève le filtre de couleur
+                matrixGifsList[5].currentGifFrameCount = 2; // gif de 2 frame
+
+                
+
                 vector<int> color = j_complete["COLOR"];
                 vector<int> leds = j_complete["LEDS"];
-                std::cout << color.size() << '\n';
-
-                gifInfo.currentGIF = 5; //draw mode
-                gifInfo.filterEnable = false; //enlève le filtre de couleur
-                matrixGifsList[5].currentGifFrameCount = 2;
-                
-                for (int i = 0; i < leds.size(); i ++) // pour chaque led
+                std::cout << leds.size() << '\n';
+                for (int i = 0; i < leds.size(); i++) // pour chaque led
                 {
                   int y = leds.at(i) / 128;
                   int x = leds.at(i) % 128;
-                  printf("LED: X:%d Y:%d\n", x,y);
+                  // printf("LED: X:%d Y:%d\n", x, y);
                   matrixGifsList[5].animation[0].buffer[y][x].red = color.at(0);
                   matrixGifsList[5].animation[0].buffer[y][x].green = color.at(1);
                   matrixGifsList[5].animation[0].buffer[y][x].blue = color.at(2);
                 }
-                // printf("COLOR: %d %d %d\n", color[0], color[1], color[2]);
 
-                // std::string leds = j_complete["LEDS"];
-                // printf("LEDS: %s\n", leds.c_str());
+
               }
 
               // else if (key == "LED")
@@ -271,35 +268,36 @@ void checkIPCFile() // File between c and web interface
               // }
             }
 
-            FileIN.clear();
+            // FileIN.clear();
 
             FileIN.close();
-            if (!interupt)
-            {
-              std::ifstream File;
-              File.open("matrix", std::ifstream::out | std::ifstream::trunc);
-              if (!File.is_open() || File.fail())
-              {
-                File.close();
-                printf("\nError : failed to erase file content !");
-              }
-              File.close();
-              // printf("Clearing file\n\n");
-              // // delete all file
-              // std::ofstream ofs;
+            // if (!interupt)
+            // {
+            //   std::ifstream File;
+            //   File.open("matrix", std::ifstream::out | std::ifstream::trunc);
+            //   if (!File.is_open() || File.fail())
+            //   {
+            //     File.close();
+            //     printf("\nError : failed to erase file content !");
+            //   }
+            //   File.close();
+            //   // printf("Clearing file\n\n");
+            //   // // delete all file
+            //   // std::ofstream ofs;
 
-              // ofs.open(IPC_FILE, std::ofstream::out | std::ofstream::trunc);
-              // if (!ofs)
-              // {
-              //   std::cout << "Could not truncate \n";
-              // }
-              // ofs.close();
-            }
+            //   // ofs.open(IPC_FILE, std::ofstream::out | std::ofstream::trunc);
+            //   // if (!ofs)
+            //   // {
+            //   //   std::cout << "Could not truncate \n";
+            //   // }
+            //   // ofs.close();
+            // }
           }
         }
       }
       i += EVENT_SIZE + event->len;
     }
+    i = 0;
   }
 }
 
