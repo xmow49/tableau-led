@@ -77,7 +77,7 @@ function startPainting(event) {
         send.dataBuild();
         if (!drawing) clearInterval(sendDrawInterval);
 
-    }, 1000);
+    }, 500);
 }
 
 function stopPainting() {
@@ -88,7 +88,7 @@ function stopPainting() {
         console.log("stop");
         send.dataBuild();
         clearInterval(sendDrawInterval);
-    }, 1500);
+    }, 5000);
 }
 
 function clearMatrix() {

@@ -15,6 +15,7 @@
 #include <unistd.h>
 #include <thread>
 #include <sstream>
+#include <vector>
 
 #include <algorithm>
 #include <map>
@@ -40,6 +41,7 @@ using rgb_matrix::Canvas;
 using rgb_matrix::FrameCanvas;
 using rgb_matrix::RGBMatrix;
 using rgb_matrix::StreamReader;
+using std::vector;
 //-----------------------------------------------------------------------------
 
 //--------- Déclarations des  structures --------------------------------------
@@ -59,16 +61,12 @@ struct MatrixAnimationBuffer
   uint16_t currentGifFrameCount = 0;
 };
 
-struct MatrixDrawBuffer
-{
-  MatrixFrameBuffer frames;
-};
-
 struct GifInfo
 {
   uint16_t currentFrame = 0;
   uint8_t currentGIF = 0;
   uint8_t currentSpeed = 100;
+  bool filterEnable = true;
 };
 
 //-----------------------------------------------------------------------------
@@ -78,16 +76,13 @@ struct GifInfo
 bool DEBUG = false;
 int SensorMesures[3] = {0, 0, 0};
 unsigned int currentSensor[3] = {0, 0, 0};
-int smoothSensorsValues[3] = {100, 100, 100};
+unsigned int smoothSensorsValues[3] = {100, 100, 100};
 const unsigned char sensorsPins[3] = {8, 9, 25}; // https://fr.pinout.xyz/pinout/wiringpi //25 8 9
 
 unsigned char currentMode = 0; // 0: GIF - 1: DRAW
 
-#define FILTRE 1
-
-MatrixAnimationBuffer matrixGifsList[10];
+MatrixAnimationBuffer matrixGifsList[6];
 GifInfo gifInfo;
-// MatrixDrawBuffer matrixDraw;
 uint16_t test = 0;
 
 #define EVENT_SIZE (sizeof(struct inotify_event))
@@ -230,6 +225,34 @@ void checkIPCFile() // File between c and web interface
                 printf("SPEED: %s\n", speed.c_str());
                 gifInfo.currentSpeed = atoi(speed.c_str()); // applique le changement
                 printf("currentSpeed: %d\n", gifInfo.currentSpeed);
+              }
+              else if (mode == "DRAW")
+              {
+                printf("ITS a DRAW\n");
+
+                // unsigned int color[] = j_complete["COLOR"];
+                std::cout << j_complete["COLOR"] << '\n';
+                vector<int> color = j_complete["COLOR"];
+                vector<int> leds = j_complete["LEDS"];
+                std::cout << color.size() << '\n';
+
+                gifInfo.currentGIF = 5; //draw mode
+                gifInfo.filterEnable = false; //enlève le filtre de couleur
+                matrixGifsList[5].currentGifFrameCount = 2;
+                
+                for (int i = 0; i < leds.size(); i ++) // pour chaque led
+                {
+                  int y = leds.at(i) / 128;
+                  int x = leds.at(i) % 128;
+                  printf("LED: X:%d Y:%d\n", x,y);
+                  matrixGifsList[5].animation[0].buffer[y][x].red = color.at(0);
+                  matrixGifsList[5].animation[0].buffer[y][x].green = color.at(1);
+                  matrixGifsList[5].animation[0].buffer[y][x].blue = color.at(2);
+                }
+                // printf("COLOR: %d %d %d\n", color[0], color[1], color[2]);
+
+                // std::string leds = j_complete["LEDS"];
+                // printf("LEDS: %s\n", leds.c_str());
               }
 
               // else if (key == "LED")
@@ -392,7 +415,7 @@ unsigned char fixBlack(unsigned char value) // met un offset pour la couleur noi
   }
 }
 
-int map(long x, long in_min, long in_max, long out_min, long out_max) //fonction map qui sert pour les valeurs des sensors de 5cm --> 200cm to 0 --> 255
+int map(long x, long in_min, long in_max, long out_min, long out_max) // fonction map qui sert pour les valeurs des sensors de 5cm --> 200cm to 0 --> 255
 {
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
@@ -400,7 +423,7 @@ int map(long x, long in_min, long in_max, long out_min, long out_max) //fonction
 static void StoreInStream(const Magick::Image &img, int delay_time_us,
                           bool do_center,
                           rgb_matrix::FrameCanvas *scratch,
-                          rgb_matrix::StreamWriter *output) //récupère les gif et les stock dans la structure + met dans un canvas (qui viens de la library, mais pas utiliser) 
+                          rgb_matrix::StreamWriter *output) // récupère les gif et les stock dans la structure + met dans un canvas (qui viens de la library, mais pas utiliser)
 {
   scratch->Clear();
   const int x_offset = do_center ? (scratch->width() - img.columns()) / 2 : 0;
@@ -430,7 +453,7 @@ static void StoreInStream(const Magick::Image &img, int delay_time_us,
 
 static void CopyStream(rgb_matrix::StreamReader *r,
                        rgb_matrix::StreamWriter *w,
-                       rgb_matrix::FrameCanvas *scratch) //jsp a quoi ca sert, mais la lib a besoin de ca
+                       rgb_matrix::FrameCanvas *scratch) // jsp a quoi ca sert, mais la lib a besoin de ca
 {
   uint32_t delay_us;
   while (r->GetNext(scratch, &delay_us))
@@ -445,7 +468,7 @@ static bool LoadImageAndScale(const char *filename,
                               int target_width, int target_height,
                               bool fill_width, bool fill_height,
                               std::vector<Magick::Image> *result,
-                              std::string *err_msg) //resize les gif
+                              std::string *err_msg) // resize les gif
 {
   std::vector<Magick::Image> frames;
   try
@@ -510,22 +533,16 @@ static bool LoadImageAndScale(const char *filename,
   return true;
 }
 
-
-
 void DisplayAnimation(const FileInfo *file,
-                      RGBMatrix *matrix, FrameCanvas *offscreen_canvas) //fonction appeler pour afficher les gif en mode normal
+                      RGBMatrix *matrix, FrameCanvas *offscreen_canvas) // fonction appeler pour afficher les gif en mode normal
 {
-  const tmillis_t duration_ms = (file->is_multi_frame
-                                     ? file->params.anim_duration_ms
-                                     : file->params.wait_ms);
+  // const tmillis_t duration_ms = (file->is_multi_frame
+  //                                    ? file->params.anim_duration_ms
+  //                                    : file->params.wait_ms);
   rgb_matrix::StreamReader reader(file->content_stream);
-  int loops = file->params.loops;
-  const tmillis_t end_time_ms = GetTimeInMillis() + duration_ms;
-  // const tmillis_t override_anim_delay = file->params.anim_delay_ms;
-
-  uint32_t delay_us = 0;
-  int sensor = -1;
-  int moyenne = 0;
+  // int loops = file->params.loops;
+  // const tmillis_t end_time_ms = GetTimeInMillis() + duration_ms;
+  //  const tmillis_t override_anim_delay = file->params.anim_delay_ms;
 
   for (uint16_t frame = 0; (frame < matrixGifsList[gifInfo.currentGIF].currentGifFrameCount - 1) && !interrupt_received; frame++)
   {
@@ -554,7 +571,7 @@ void DisplayAnimation(const FileInfo *file,
     {
       for (uint16_t x = 0; x < 128; x++)
       {
-        if (FILTRE)
+        if (gifInfo.filterEnable)
         {
 
           offscreen_canvas->SetPixel(x, y,
@@ -579,8 +596,6 @@ void DisplayAnimation(const FileInfo *file,
     SleepMillis((15 * (100 - gifInfo.currentSpeed)) / 100);
   }
 }
-
-
 
 static int usage(const char *progname) // fontion qui retourne la page d'aide, mais elle sert plus a grand chose, jai tous enlever pour simpifier le code
 {
