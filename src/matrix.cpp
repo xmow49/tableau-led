@@ -261,31 +261,7 @@ void checkIPCFile() // File between c and web interface
                 }
               }
             }
-
-            // FileIN.clear();
-
             FileIN.close();
-            // if (!interupt)
-            // {
-            //   std::ifstream File;
-            //   File.open("matrix", std::ifstream::out | std::ifstream::trunc);
-            //   if (!File.is_open() || File.fail())
-            //   {
-            //     File.close();
-            //     printf("\nError : failed to erase file content !");
-            //   }
-            //   File.close();
-            //   // printf("Clearing file\n\n");
-            //   // // delete all file
-            //   // std::ofstream ofs;
-
-            //   // ofs.open(IPC_FILE, std::ofstream::out | std::ofstream::trunc);
-            //   // if (!ofs)
-            //   // {
-            //   //   std::cout << "Could not truncate \n";
-            //   // }
-            //   // ofs.close();
-            // }
           }
         }
       }
