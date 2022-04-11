@@ -22,7 +22,7 @@ $(RGB_LIBRARY): FORCE
 
 
 matrix: $(OBJECTS) $(RGB_LIBRARY)
-	$(CXX) $(CXXFLAGS) matrix.o -o $@ $(LDFLAGS) $(RGB_LDFLAGS) $(MAGICK_LDFLAGS) -lwiringPi
+	$(CXX) $(CXXFLAGS) matrix.o -o $@ $(LDFLAGS) $(RGB_LDFLAGS) $(MAGICK_LDFLAGS) -lwiringPi -lboost_system
 
 
 %.o : %.cpp

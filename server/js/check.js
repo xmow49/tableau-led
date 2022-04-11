@@ -114,45 +114,28 @@ const equals = (a, b) =>
 // Sends message to server via POST
 function postMsg(data) {
 
-    // Creates a promise object for sending the desired data
-    fetch(window.location.href + 'post', {
-        method: "POST",
-        // Format of the body must match the Content-Type
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
-    });
-}
+    // // Creates a promise object for sending the desired data
+    // fetch(window.location.href + 'post', {
+    //     method: "POST",
+    //     // Format of the body must match the Content-Type
+    //     headers: { "Content-Type": "application/json" },
+    //     body: JSON.stringify(data);
+    // });
 
-function drawMsg(data) {
-
-    // Creates a promise object for sending the desired data
-    fetch(window.location.href + 'draw', {
-        method: "POST",
-        // Format of the body must match the Content-Type
-        headers: { "Content-Type": "text/plain" },
-        body: data
-    });
+    socket.send(JSON.stringify(data));
 }
 
 
+// Créer une connexion WebSocket
+let domain = (new URL(window.location.href));
+const socket = new WebSocket('ws://' + domain.hostname + ":8083");
 
-// function sendData(data) {
-//     var XHR = new XMLHttpRequest();
-//     var FD = new FormData();
-//     // Mettez les données dans l'objet FormData
-//     for (name in data) {
-//         FD.append(name, data[name]);
-//     }
+// La connexion est ouverte
+socket.addEventListener('open', function (event) {
+ //socket.send('Coucou le serveur !');
+});
 
-//     // Définissez ce qui se passe si la soumission s'est opérée avec succès
-//     XHR.addEventListener('load', function(event) {});
-
-//     // Definissez ce qui se passe en cas d'erreur
-//     XHR.addEventListener('error', function(event) {});
-
-//     // Configurez la requête
-//     XHR.open('POST', window.location.href + 'post');
-
-//     // Expédiez l'objet FormData ; les en-têtes HTTP sont automatiquement définies
-//     XHR.send(FD);
-// }
+// Écouter les messages
+socket.addEventListener('message', function (event) {
+  console.log('MSG FROM SERVER:', event.data);
+});

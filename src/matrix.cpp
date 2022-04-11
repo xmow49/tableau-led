@@ -30,9 +30,14 @@
 #include <iostream>
 #include <fstream>
 
-#include <nlohmann/json.hpp> //sudo apt-get install nlohmann-json-dev
+//-----------Librarys externes: info dans le fichier README----------------------
 
+#include <nlohmann/json.hpp>
 #include <wiringPi.h>
+
+#include <boost/beast/core.hpp>
+#include <boost/beast/websocket.hpp>
+
 //-----------------------------------------------------------------------------
 
 #include "config.h"
@@ -44,6 +49,13 @@ using rgb_matrix::FrameCanvas;
 using rgb_matrix::RGBMatrix;
 using rgb_matrix::StreamReader;
 using std::vector;
+
+namespace beast = boost::beast;         // from <boost/beast.hpp>
+namespace http = beast::http;           // from <boost/beast/http.hpp>
+namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
+namespace net = boost::asio;            // from <boost/asio.hpp>
+using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
+
 //-----------------------------------------------------------------------------
 
 //--------- Déclarations des  structures --------------------------------------
@@ -144,131 +156,9 @@ std::string split(const std::string &chaine, char delimiteur, char index)
   return "";
 }
 
-bool jsonKeyExists(const json& j, const std::string& key)
+bool jsonKeyExists(const json &j, const std::string &key)
 {
-    return j.find(key) != j.end();
-}
-
-void checkIPCFile() // File between c and web interface
-{
-  //---- variables ----
-  int length, i = 0;
-  char buffer[BUF_LEN];
-  //-------------------
-  fd = inotify_init(); // init file lisen
-  // if (fd < 0) // check if init is ok
-  //   printf("inotify_init\n");
-
-  wd = inotify_add_watch(fd, IPC_PATH, IN_MODIFY | IN_CREATE | IN_DELETE); // setup watch event
-
-  // if (length < 0)
-  //   printf("read\n");
-
-  while (1)
-  {
-    i = 0;
-    length = read(fd, buffer, BUF_LEN);
-
-    if (i < length)
-    {
-      struct inotify_event *event = (struct inotify_event *)&buffer[i];
-      if (event->len)
-      {
-        if (event->mask & IN_MODIFY) // if new modify event
-        {
-          bool interupt = false;
-          // printf("The file %s was modified.\n", event->name);
-          if (strcmp(event->name, IPC_FILE) == 0) // if its the matrix temp file
-          {
-            //printf("Info: i:%d; length:%d\n", i, length);
-            printf("New event from web interface\n");
-
-            // Create a text string, which is used to output the text file
-            std::string line;
-            // Open the file
-            std::ifstream FileIN;
-            FileIN.open(IPC_ALL);
-            while (getline(FileIN, line))
-            {
-              printf("read: %s\n", line.c_str());
-              json j_complete = json::parse(line);
-              // std::cout << std::setw(4) << j_complete << std::endl;
-              // std::cout << std::setw(4) << j_complete["MODE"] << std::endl;
-
-              std::string to = j_complete["TO"];
-              if (to == "CPP")
-              {
-                // printf("ITS for me\n");
-              }
-              else
-              {
-                interupt = true;
-              }
-
-              std::string mode = j_complete["MODE"];
-
-              if (mode == "GIF")
-              {
-                printf("ITS a GIF\n");
-
-                gifInfo.filterEnable = true; // active le filtre
-
-                std::string gif = j_complete["GIF"];
-                gifInfo.currentGIF = atoi(gif.c_str()); // applique le changement
-
-                std::string speed = j_complete["SPEED"];
-                gifInfo.currentSpeed = atoi(speed.c_str()); // applique le changement
-                printf("currentSpeed: %d\n", gifInfo.currentSpeed);
-              }
-              else if (mode == "DRAW")
-              {
-                if (jsonKeyExists(j_complete, "DRAW"))
-                {
-                  if (j_complete["DRAW"] == "CLEAR")
-                  {
-                    // clear matrix
-                    printf("Clearing the matrix...\n");
-                    for (uint8_t y = 0; y < 128; y++)
-                    {
-                      for (uint8_t x = 0; x < 128; x++)
-                      {
-                        matrixGifsList[5].animation[0].buffer[y][x].red = 0;
-                        matrixGifsList[5].animation[0].buffer[y][x].green = 0;
-                        matrixGifsList[5].animation[0].buffer[y][x].blue = 0;
-                      }
-                    }
-                  }
-                }
-
-                else
-                {
-                  gifInfo.currentGIF = 5;                     // draw mode
-                  gifInfo.filterEnable = false;               // enlève le filtre de couleur
-                  matrixGifsList[5].currentGifFrameCount = 2; // gif de 2 frame
-
-                  vector<int> color = j_complete["COLOR"];
-                  vector<int> leds = j_complete["LEDS"];
-                  std::cout << leds.size() << '\n';
-                  for (uint8_t i = 0; i < leds.size(); i++) // pour chaque led
-                  {
-                    int y = leds.at(i) / 128;
-                    int x = leds.at(i) % 128;
-                    // printf("LED: X:%d Y:%d\n", x, y);
-                    matrixGifsList[5].animation[0].buffer[y][x].red = color.at(0);
-                    matrixGifsList[5].animation[0].buffer[y][x].green = color.at(1);
-                    matrixGifsList[5].animation[0].buffer[y][x].blue = color.at(2);
-                  }
-                }
-              }
-            }
-            FileIN.close();
-          }
-        }
-      }
-      i += EVENT_SIZE + event->len;
-    }
-    // i = 0;
-  }
+  return j.find(key) != j.end();
 }
 
 int getSensor(unsigned char nSensor, int minDistance = 5, int maxDistance = 300) // récupère la valeur d'un capeur en foncion de nsensor n° 0 1 2
@@ -587,19 +477,144 @@ static int usage(const char *progname) // fontion qui retourne la page d'aide, m
   return 1;
 }
 
+
+void WebSocketServer()
+{
+    while(1){
+      bool wantReset = false;
+    
+      auto const address = net::ip::make_address("0.0.0.0");
+      auto const port = static_cast<unsigned short>(std::atoi("8083"));
+
+      net::io_context ioc{1};
+
+      tcp::acceptor acceptor{ioc, {address, port}};
+
+      tcp::socket socket{ioc};
+
+      acceptor.accept(socket);
+      std::cout << "New WebSocket Connection" << std::endl;
+      auto q = std::move(socket);
+      websocket::stream<tcp::socket> ws{std::move(const_cast<tcp::socket &>(q))};
+
+      // Set a decorator to change the Server of the handshake
+      // no need to set. It ıs not necessary
+      // ws.set_option(websocket::stream_base::decorator(
+      //     [](websocket::response_type &res)
+      //     {
+      //         res.set(http::field::server,
+      //                 std::string(BOOST_BEAST_VERSION_STRING) +
+      //                     " websocket-server-sync");
+      //     }));
+      // Accept the websocket handshake
+      ws.accept();
+
+      while (!wantReset)
+      {
+          try
+          {
+              beast::flat_buffer buffer;
+              ws.read(buffer);// Read a message
+
+              std::string recevied = beast::buffers_to_string(buffer.data());
+              //std::cout << "New Message from WebSocket: " << recevied << std::endl;
+            
+              beast::flat_buffer response;
+              beast::ostream(response) << "OK";
+              ws.write(response.data());
+
+              //------------------------------
+              json j_complete = json::parse(recevied);
+              // std::cout << std::setw(4) << j_complete << std::endl;
+              // std::cout << std::setw(4) << j_complete["MODE"] << std::endl;
+
+              std::string to = j_complete["TO"];
+              if (to == "CPP")
+              {
+                // printf("ITS for me\n");
+              }
+              std::string mode = j_complete["MODE"];
+
+              if (mode == "GIF")
+              {
+                printf("ITS a GIF\n");
+
+                gifInfo.filterEnable = true; // active le filtre
+
+                std::string gif = j_complete["GIF"];
+                gifInfo.currentGIF = atoi(gif.c_str()); // applique le changement
+
+                std::string speed = j_complete["SPEED"];
+                gifInfo.currentSpeed = atoi(speed.c_str()); // applique le changement
+                printf("currentSpeed: %d\n", gifInfo.currentSpeed);
+              }
+              else if (mode == "DRAW")
+              {
+                if (jsonKeyExists(j_complete, "DRAW"))
+                {
+                  if (j_complete["DRAW"] == "CLEAR")
+                  {
+                    // clear matrix
+                    printf("Clearing the matrix...\n");
+                    for (uint8_t y = 0; y < 128; y++)
+                    {
+                      for (uint8_t x = 0; x < 128; x++)
+                      {
+                        matrixGifsList[5].animation[0].buffer[y][x].red = 0;
+                        matrixGifsList[5].animation[0].buffer[y][x].green = 0;
+                        matrixGifsList[5].animation[0].buffer[y][x].blue = 0;
+                      }
+                    }
+                  }
+                }
+
+                else
+                {
+                  gifInfo.currentGIF = 5;                     // draw mode
+                  gifInfo.filterEnable = false;               // enlève le filtre de couleur
+                  matrixGifsList[5].currentGifFrameCount = 2; // gif de 2 frame
+
+                  vector<int> color = j_complete["COLOR"];
+                  vector<int> leds = j_complete["LEDS"];
+                  std::cout << leds.size() << '\n';
+                  for (uint8_t i = 0; i < leds.size(); i++) // pour chaque led
+                  {
+                    int y = leds.at(i) / 128;
+                    int x = leds.at(i) % 128;
+                    // printf("LED: X:%d Y:%d\n", x, y);
+                    matrixGifsList[5].animation[0].buffer[y][x].red = color.at(0);
+                    matrixGifsList[5].animation[0].buffer[y][x].green = color.at(1);
+                    matrixGifsList[5].animation[0].buffer[y][x].blue = color.at(2);
+                  }
+                }
+              }
+
+          }
+          catch (beast::system_error const &se)
+          {
+              if (se.code() != websocket::error::closed)
+              {
+                  std::cerr << "Error: " << se.code().message() << std::endl;
+                  std::cout << "Reseting Websocket Server..." << std::endl;
+                  wantReset = true;
+                  break;
+              }
+          }
+      }
+    }
+}
+
 int main(int argc, char *argv[])
 {
 
   wiringPiSetup(); // initialisation des GPIO
-
+  
   std::thread CheckSensor(sensorLoop, 5, 200); // thread qui va lire les capteurs
-
-  std::thread CheckIPC(checkIPCFile); // thread qui va lire le fichiers IPC pour la communication avec l'interface web
+  std::thread CheckWebSocket(WebSocketServer);
 
   Magick::InitializeMagick(*argv); // Initialize ImageMagick
 
   RGBMatrix::Options matrix_options; // options for the matrix
-
   //---------- Matrix options ----------
   matrix_options.rows = 64;
   matrix_options.cols = 64;
@@ -614,6 +629,7 @@ int main(int argc, char *argv[])
   matrix_options.disable_hardware_pulsing = true;
 
   //-------------------------------------
+
 
   rgb_matrix::RuntimeOptions runtime_opt;
   if (!rgb_matrix::ParseOptionsFromFlags(&argc, &argv,
@@ -911,7 +927,7 @@ int main(int argc, char *argv[])
   // Leaking the FileInfos, but don't care at program end.
 
   CheckSensor.detach();
-  CheckIPC.detach();
+  CheckWebSocket.detach();
 
   inotify_rm_watch(fd, wd);
   close(fd);

@@ -23,7 +23,11 @@ sudo dpkg -i wiringpi-latest.deb
 Pour tester que c'est correctement installé:
 `gpio -v`
 
-**3. Configuration pour faire fonctioner la matrice**
+**3. Installation de Boost**
+`sudo apt-get install libboost-all-dev` 
+
+
+**4. Configuration pour faire fonctioner la matrice**
 a. Désactivation du son
     ```sudo nano /boot/config.txt```
     Remplacer `dtparam=audio=on` par `dtparam=audio=off`
