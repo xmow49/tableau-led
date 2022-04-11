@@ -52,7 +52,7 @@ class send {
         return animationSpeed;
     }
 
-    static clearDraw(){
+    static clearDraw() {
         dataJSON = {
             TO: 'CPP',
             MODE: "DRAW",
@@ -70,8 +70,8 @@ class send {
         if (send.mode() == "DRAW") {
             //console.log(pixelToSend);
             var pixelToSendOrdered = [];
-            for(var i = 0; i < pixelToSend.length; i++) {
-                if(pixelToSend[i] != null) {
+            for (var i = 0; i < pixelToSend.length; i++) {
+                if (pixelToSend[i] != null) {
                     pixelToSendOrdered.push(pixelToSend[i]);
                 }
             }
@@ -79,15 +79,15 @@ class send {
 
             dataJSON.COLOR = hexToRGB(drawingColor);
             dataJSON.LEDS = pixelToSendOrdered;
-            
-            pixelToSend = [];
-            if(pixelToSendOrdered.length == 0){
 
-            }else{
+            pixelToSend = [];
+            if (pixelToSendOrdered.length == 0) {
+
+            } else {
                 console.log(dataJSON);
                 postMsg(dataJSON);
             }
-            
+
 
 
         } else if (send.mode() == "GIF") {
@@ -95,9 +95,9 @@ class send {
             dataJSON.SPEED = send.animationSpeed();
             console.log(dataJSON);
             postMsg(dataJSON);
-            
+
         }
-        
+
 
     }
 
@@ -126,16 +126,43 @@ function postMsg(data) {
 }
 
 
+
 // Créer une connexion WebSocket
-let domain = (new URL(window.location.href));
-const socket = new WebSocket('ws://' + domain.hostname + ":8083");
+const domain = (new URL(window.location.href));
+var socket;
 
-// La connexion est ouverte
-socket.addEventListener('open', function (event) {
- //socket.send('Coucou le serveur !');
-});
+class socketConnection {
 
-// Écouter les messages
-socket.addEventListener('message', function (event) {
-  console.log('MSG FROM SERVER:', event.data);
-});
+    static connect() {
+        document.getElementById("connect").style.display = "flex";
+        document.getElementById("disconected").style.display = "none";
+        document.getElementById("popup-background").style.display = "block";
+
+        socket = new WebSocket('ws://' + domain.hostname + ":8083");
+        // La connexion est ouverte
+        socket.addEventListener('open', function (event) {
+            console.log("Connexion établie");
+            document.getElementById("connect").style.display = "none";
+            document.getElementById("disconected").style.display = "none";
+            document.getElementById("popup-background").style.display = "none";
+        });
+
+        // Écouter les messages
+        socket.addEventListener('message', function (event) {
+            console.log('MSG FROM SERVER:', event.data);
+        });
+
+        socket.addEventListener('close', function (event) {
+            document.getElementById("connect").style.display = "none";
+            document.getElementById("disconected").style.display = "flex";
+            document.getElementById("popup-background").style.display = "block";
+        });
+
+        socket.addEventListener('error', function (event) {
+            console.log('ERROR:', event.data);
+        });
+    }
+}
+
+socketConnection.connect();
+

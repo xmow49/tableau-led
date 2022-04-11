@@ -8,6 +8,7 @@
 
     <link rel="stylesheet" href="dl/mdi/mdi.css" />
     <link rel="stylesheet" href="dl/colorPicker/colorPicker.css" />
+    <link rel="stylesheet" href="css/popup.css" />
     <meta name="viewport" content="minimal-ui, width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
     <meta name="HandheldFriendly" content="True">
     <meta name="MobileOptimized" content="320" />
@@ -15,6 +16,17 @@
 </head>
 
 <body>
+
+    <div class="popup-background" id="popup-background"></div>
+    <div class="popup" id="connect">
+        <h2>Connexion à la matrice...</h2>
+        <div class="spin"></div>
+    </div>
+
+    <div class="popup" id="disconected" style="display: none;">
+        <h2>Erreur de connexion.</h2>
+        <button onclick="socketConnection.connect();">Reconnexion</button>
+    </div>
 
     <header>
         <h1>Matrice LED</h1>

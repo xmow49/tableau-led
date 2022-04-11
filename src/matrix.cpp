@@ -576,7 +576,7 @@ void WebSocketServer()
 
                   vector<int> color = j_complete["COLOR"];
                   vector<int> leds = j_complete["LEDS"];
-                  std::cout << leds.size() << '\n';
+                  //std::cout << leds.size() << '\n';
                   for (uint8_t i = 0; i < leds.size(); i++) // pour chaque led
                   {
                     int y = leds.at(i) / 128;
