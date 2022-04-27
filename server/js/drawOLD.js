@@ -73,6 +73,7 @@ function startPainting(event) {
     getPosition(event);
     sketch(event);
     console.log("start");
+    clearTimeout(drawTimeout);
     sendDrawInterval = window.setInterval(function() {
         send.dataBuild();
         if (!drawing) clearInterval(sendDrawInterval);
@@ -80,15 +81,17 @@ function startPainting(event) {
     }, 20);
 }
 
+var drawTimeout;
+
 function stopPainting() {
     paint = false;
-    // clearInterval(sendDrawInterval);
-    // window.setTimeout(function() { //au bout de 15 secondes, on depasse en mode gif
-    //     drawing = false;
-    //     console.log("stop");
-    //     send.dataBuild();
-    //     clearInterval(sendDrawInterval);
-    // }, 10000);
+    clearInterval(sendDrawInterval);
+    drawTimeout = window.setTimeout(function() { //au bout de 15 secondes, on depasse en mode gif
+        drawing = false;
+        console.log("stop");
+        send.dataBuild();
+        clearInterval(sendDrawInterval);
+    }, 10000);
 }
 
 function clearMatrix() {

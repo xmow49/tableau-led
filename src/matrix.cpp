@@ -35,6 +35,7 @@
 #include <nlohmann/json.hpp>
 #include <wiringPi.h>
 
+#include <boost/asio.hpp>  
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
 
@@ -626,7 +627,7 @@ int main(int argc, char *argv[])
   matrix_options.pwm_bits = 11;
   matrix_options.pwm_lsb_nanoseconds = 50;
 
-  matrix_options.disable_hardware_pulsing = true;
+  //matrix_options.disable_hardware_pulsing = true;
 
   //-------------------------------------
 
