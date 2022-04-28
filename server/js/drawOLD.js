@@ -86,7 +86,7 @@ var drawTimeout;
 function stopPainting() {
     paint = false;
     clearInterval(sendDrawInterval);
-    drawTimeout = window.setTimeout(function() { //au bout de 15 secondes, on depasse en mode gif
+    drawTimeout = window.setTimeout(function() { //au bout de 10 secondes, on depasse en mode gif
         drawing = false;
         console.log("stop");
         send.dataBuild();

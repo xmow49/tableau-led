@@ -411,11 +411,11 @@ void DisplayAnimation(const FileInfo *file,
     {
       if (currentSensor[i] < smoothSensorsValues[i]) // si la nouvelle valeur du capteur est inférieur a la dernière enregistrer,
       {
-        smoothSensorsValues[i]--; // on décrémente de 1
+        smoothSensorsValues[i]-=2; // on décrémente de 1
       }
       else if (currentSensor[i] > smoothSensorsValues[i]) // si la nouvelle valeur du capteur est supérieur a la dernière enregistrer,
       {
-        smoothSensorsValues[i]++; // on incrémente de 1
+        smoothSensorsValues[i]+=2; // on incrémente de 1
       }
     }
 
