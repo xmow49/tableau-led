@@ -2,7 +2,6 @@
 <html lang="fr">
 
 <head>
-
     <link rel='stylesheet' href='css/index.css'>
     <link rel='stylesheet' href='css/customRadios.css'>
 
@@ -16,7 +15,6 @@
 </head>
 
 <body>
-
     <div class="popup-background" id="popup-background"></div>
     <div class="popup" id="connect">
         <h2>Connexion à la matrice...</h2>
@@ -27,10 +25,9 @@
         <h2>Erreur de connexion.</h2>
         <button onclick="socketConnection.connect();">Reconnexion</button>
     </div>
-
     <header>
         <h1>Matrice LED</h1>
-        <a href="settings.php"><button><span class="mdi mdi-cog"></span></button></a>
+        <a href="settings.html"><button><span class="mdi mdi-cog"></span></button></a>
     </header>
 
     <div class="option-container">
@@ -43,10 +40,6 @@
                 <label name="Animation 3" class="radio-container"><input type="radio" name="animation-selector" value="2" onclick="send.dataBuild();"><span class="radio-checkmark"></span></label>
                 <label name="Animation 4" class="radio-container"><input type="radio" name="animation-selector" value="3" onclick="send.dataBuild();"><span class="radio-checkmark"></span></label>
             </div>
-
-
-
-
         </div>
 
         <div class="option-item">
@@ -59,7 +52,6 @@
                 <input onchange="send.dataBuild();" type="range" id="animation-speed" min="0" max="100" value="50" step="5">
 
             </div>
-
         </div>
 
         <div class="option-item">
@@ -79,11 +71,6 @@
 </body>
 <script src="dl/colorPicker/colorPicker.js"></script>
 <script src="js/draw.js"></script>
-<script src="js/drawOLD.js"></script>
-<script src="js/check.js"></script>
+<script src="js/websocket.js"></script>
 <script src="js/index.js "></script>
-
-<!-- <script src="js/draw.js "></script> -->
-
-
 </html>
