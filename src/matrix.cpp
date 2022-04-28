@@ -773,11 +773,21 @@ int main(int argc, char *argv[])
   // Preparing all the images beforehand as the Pi might be too slow to
   // be quickly switching between these. So preprocess.
   std::vector<FileInfo *> file_imgs;
+  
+  printf("Loading...");
+  std::vector<Magick::Image> load_sequences;
+  LoadImageAndScale("./loading.gif", matrix->width(), matrix->height(), fill_width, fill_height, &load_sequences, &err_msg)
+  gifInfo.currentGIF = 0; //loading gif
+  for (size_t i = 0; i < load_sequences.size(); ++i){
+      const Magick::Image &load = load_sequences[i];
+      StoreInStream(load, 50000, false, offscreen_canvas, global_stream_writer ? global_stream_writer : &out);
+  }
+  printf("OK");
   printf("Analyzing Gifs...\n");
+
   for (int imgarg = optind; imgarg < argc; ++imgarg)
   {
-    printf("for %d\n", imgarg);
-    gifInfo.currentGIF = imgarg - 1;
+    gifInfo.currentGIF = imgarg;
     const char *filename = argv[imgarg];
     FileInfo *file_info = NULL;
 
