@@ -379,19 +379,11 @@ static bool LoadImageAndScale(const char *filename,
 }
 
 void DisplayAnimation(const FileInfo *file,
-                      RGBMatrix *matrix, FrameCanvas *offscreen_canvas) // fonction appeler pour afficher les gif en mode normal
+                      RGBMatrix *matrix, FrameCanvas *offscreen_canvas) // fonction appeler pour afficher les gif
 {
-  // const tmillis_t duration_ms = (file->is_multi_frame
-  //                                    ? file->params.anim_duration_ms
-  //                                    : file->params.wait_ms);
   rgb_matrix::StreamReader reader(file->content_stream);
-  // int loops = file->params.loops;
-  // const tmillis_t end_time_ms = GetTimeInMillis() + duration_ms;
-  //  const tmillis_t override_anim_delay = file->params.anim_delay_ms;
-
   for (uint16_t frame = 0; (frame < matrixGifsList[gifInfo.currentGIF].currentGifFrameCount - 1) && !interrupt_received; frame++)
   {
-
     //-------------------Gestion des transition fluides ------------------------
     for (int i = 0; i < 3; i++)
     {
@@ -404,12 +396,10 @@ void DisplayAnimation(const FileInfo *file,
         smoothSensorsValues[i]+=2; // on incrémente de 1
       }
     }
-
     if (DEBUG)
     {
       printf("%d %d %d\n", smoothSensorsValues[0], smoothSensorsValues[1], smoothSensorsValues[2]);
     }
-
     //----------------------------------------------------------------------------
 
     for (uint16_t y = 0; y < 128; y++)
@@ -424,7 +414,6 @@ void DisplayAnimation(const FileInfo *file,
                                      map(smoothSensorsValues[1], 5, MAX_DISTANCE, 255, 20) * matrixGifsList[gifInfo.currentGIF].animation[frame].buffer[y][x].green / 255,
                                      map(smoothSensorsValues[2], 5, MAX_DISTANCE, 255, 20) * matrixGifsList[gifInfo.currentGIF].animation[frame].buffer[y][x].blue / 255);
           // offscreen_canvas->SetPixel(x, y, 255,255,255);
-          // printf("before:%d after:%d\n", matrixGifsList[gifInfo.currentGIF].animation[frame].buffer[y][x].red, map(currentSensor[0], 5, MAX_DISTANCE, 0, 255) * matrixGifsList[gifInfo.currentGIF].animation[frame].buffer[y][x].red / 255);
         }
         else
         {
@@ -767,9 +756,11 @@ int main(int argc, char *argv[])
   std::thread loadingScreen;
   if(LoadImageAndScale("./gifs/loading.gif", matrix->width(), matrix->height(), fill_width, fill_height, &load_sequences, &err_msg)){
     gifInfo.currentGIF = 0; //loading gif
-    for (size_t i = 0; i < load_sequences.size(); ++i){
+    printf("Loading Frames: %d \n",load_sequences.size());
+    for (size_t i = 0; i < load_sequences.size() - 1; ++i){
         const Magick::Image &load = load_sequences[i];
         StoreInStream(load);
+        gifInfo.currentFrame = i;
     }
     loadingScreen = std::thread(DisplayAnimation, file_imgs[0], matrix, offscreen_canvas);
     printf("OK\n");
