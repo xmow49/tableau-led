@@ -279,15 +279,8 @@ int map(long x, long in_min, long in_max, long out_min, long out_max) // fonctio
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
-static void StoreInStream(const Magick::Image &img, int delay_time_us,
-                          bool do_center,
-                          rgb_matrix::FrameCanvas *scratch,
-                          rgb_matrix::StreamWriter *output) // récupère les gif et les stock dans la structure + met dans un canvas (qui viens de la library, mais pas utiliser)
+static void StoreInStream(const Magick::Image &img) // récupère les gif et les stock dans la structure + met dans un canvas (qui viens de la library, mais pas utiliser)
 {
-  scratch->Clear();
-  const int x_offset = do_center ? (scratch->width() - img.columns()) / 2 : 0;
-  const int y_offset = do_center ? (scratch->height() - img.rows()) / 2 : 0;
-
   for (size_t y = 0; y < img.rows(); ++y)
   {
     for (size_t x = 0; x < img.columns(); ++x)
@@ -295,19 +288,12 @@ static void StoreInStream(const Magick::Image &img, int delay_time_us,
       const Magick::Color &c = img.pixelColor(x, y);
       if (c.alphaQuantum() < 256)
       {
-        scratch->SetPixel(x + x_offset, y + y_offset,
-                          ScaleQuantumToChar(c.redQuantum()),
-                          ScaleQuantumToChar(c.greenQuantum()),
-                          ScaleQuantumToChar(c.blueQuantum()));
-
-        matrixGifsList[gifInfo.currentGIF].animation[gifInfo.currentFrame].buffer[y + y_offset][x + x_offset].red = fixBlack(c.redQuantum());
-        matrixGifsList[gifInfo.currentGIF].animation[gifInfo.currentFrame].buffer[y + y_offset][x + x_offset].green = fixBlack(c.greenQuantum());
-        matrixGifsList[gifInfo.currentGIF].animation[gifInfo.currentFrame].buffer[y + y_offset][x + x_offset].blue = fixBlack(c.blueQuantum());
+        matrixGifsList[gifInfo.currentGIF].animation[gifInfo.currentFrame].buffer[y][x].red = fixBlack(c.redQuantum());
+        matrixGifsList[gifInfo.currentGIF].animation[gifInfo.currentFrame].buffer[y][x].green = fixBlack(c.greenQuantum());
+        matrixGifsList[gifInfo.currentGIF].animation[gifInfo.currentFrame].buffer[y][x].blue = fixBlack(c.blueQuantum());
       }
     }
   }
-
-  output->Stream(*scratch, delay_time_us);
 }
 
 static void CopyStream(rgb_matrix::StreamReader *r,
@@ -773,16 +759,25 @@ int main(int argc, char *argv[])
   // Preparing all the images beforehand as the Pi might be too slow to
   // be quickly switching between these. So preprocess.
   std::vector<FileInfo *> file_imgs;
-  
-  printf("Loading...");
+  std::string err_msg;
+  printf("Loading...\n");
+
+  //------------------------------------------------------
   std::vector<Magick::Image> load_sequences;
-  LoadImageAndScale("./loading.gif", matrix->width(), matrix->height(), fill_width, fill_height, &load_sequences, &err_msg)
-  gifInfo.currentGIF = 0; //loading gif
-  for (size_t i = 0; i < load_sequences.size(); ++i){
-      const Magick::Image &load = load_sequences[i];
-      StoreInStream(load, 50000, false, offscreen_canvas, global_stream_writer ? global_stream_writer : &out);
+  std::thread loadingScreen;
+  if(LoadImageAndScale("./gifs/loading.gif", matrix->width(), matrix->height(), fill_width, fill_height, &load_sequences, &err_msg)){
+    gifInfo.currentGIF = 0; //loading gif
+    for (size_t i = 0; i < load_sequences.size(); ++i){
+        const Magick::Image &load = load_sequences[i];
+        StoreInStream(load);
+    }
+    loadingScreen = std::thread(DisplayAnimation, file_imgs[0], matrix, offscreen_canvas);
+    printf("OK\n");
+  }else{
+    perror("Loading gif not found (./gifs/loading.gif)");
   }
-  printf("OK");
+
+  //-------------------------------------------------------
   printf("Analyzing Gifs...\n");
 
   for (int imgarg = optind; imgarg < argc; ++imgarg)
@@ -791,7 +786,7 @@ int main(int argc, char *argv[])
     const char *filename = argv[imgarg];
     FileInfo *file_info = NULL;
 
-    std::string err_msg;
+    
     std::vector<Magick::Image> image_sequence;
     if (LoadImageAndScale(filename, matrix->width(), matrix->height(),
                           fill_width, fill_height, &image_sequence, &err_msg))
@@ -804,7 +799,7 @@ int main(int argc, char *argv[])
       printf("Gif Frame count: %d\n", image_sequence.size());
       matrixGifsList[gifInfo.currentGIF].currentGifFrameCount = image_sequence.size();
 
-      for (size_t i = 0; i < image_sequence.size(); ++i)
+      for (size_t i = 1; i < image_sequence.size(); ++i)
       {
         const Magick::Image &img = image_sequence[i];
         int64_t delay_time_us;
@@ -818,9 +813,7 @@ int main(int argc, char *argv[])
         }
         if (delay_time_us <= 0)
           delay_time_us = 100 * 1000; // 1/10sec
-        StoreInStream(img, delay_time_us, do_center, offscreen_canvas,
-                      global_stream_writer ? global_stream_writer : &out);
-
+        StoreInStream(img);
         gifInfo.currentFrame = i;
       }
     }
@@ -869,6 +862,10 @@ int main(int argc, char *argv[])
   }
 
   printf(" OK\n");
+  // loadingScreen.detach();
+  // gifInfo.currentGIF = 1; //first gif
+  
+
   if (stream_output)
   {
     delete global_stream_writer;
