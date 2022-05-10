@@ -82,6 +82,7 @@ struct GifInfo
   uint8_t currentGIF = 0;
   uint8_t currentSpeed = 100;
   bool filterEnable = true;
+  uint8_t loadingScreenFrameCount = 0;
 };
 
 //-----------------------------------------------------------------------------
@@ -378,10 +379,9 @@ static bool LoadImageAndScale(const char *filename,
   return true;
 }
 
-void DisplayAnimation(const FileInfo *file,
-                      RGBMatrix *matrix, FrameCanvas *offscreen_canvas) // fonction appeler pour afficher les gif
+void DisplayAnimation(RGBMatrix *matrix) // fonction appeler pour afficher les gif
 {
-  rgb_matrix::StreamReader reader(file->content_stream);
+  FrameCanvas *offscreen_canvas = matrix->CreateFrameCanvas();
   for (uint16_t frame = 0; (frame < matrixGifsList[gifInfo.currentGIF].currentGifFrameCount - 1) && !interrupt_received; frame++)
   {
     //-------------------Gestion des transition fluides ------------------------
@@ -424,9 +424,7 @@ void DisplayAnimation(const FileInfo *file,
         }
       }
     }
-    offscreen_canvas = matrix->SwapOnVSync(offscreen_canvas,
-                                           file->params.vsync_multiple);
-
+    offscreen_canvas = matrix->SwapOnVSync(offscreen_canvas, 1);
     SleepMillis((15 * (100 - gifInfo.currentSpeed)) / 100);
   }
 }
@@ -578,6 +576,30 @@ void WebSocketServer()
           }
       }
     }
+}
+
+
+void loadingScreenFunction(RGBMatrix *matrix){
+  while(1){
+    //DisplayAnimation(matrix);
+      FrameCanvas *offscreen_canvas = matrix->CreateFrameCanvas();
+      for (uint16_t frame = 0; (frame < gifInfo.loadingScreenFrameCount - 1) && !interrupt_received; frame++)
+      {
+        for (uint16_t y = 0; y < 128; y++)
+        {
+          for (uint16_t x = 0; x < 128; x++)
+          {
+              offscreen_canvas->SetPixel(x, y,
+                                        matrixGifsList[0].animation[frame].buffer[y][x].red,
+                                        matrixGifsList[0].animation[frame].buffer[y][x].green,
+                                        matrixGifsList[0].animation[frame].buffer[y][x].blue);
+            
+          }
+        }
+        offscreen_canvas = matrix->SwapOnVSync(offscreen_canvas, 1);
+        SleepMillis((15 * (100 - gifInfo.currentSpeed)) / 100);
+      }
+  }
 }
 
 int main(int argc, char *argv[])
@@ -750,34 +772,12 @@ int main(int argc, char *argv[])
   std::vector<FileInfo *> file_imgs;
   std::string err_msg;
   printf("Loading...\n");
-
-  //------------------------------------------------------
-  std::vector<Magick::Image> load_sequences;
   std::thread loadingScreen;
-  if(LoadImageAndScale("./gifs/loading.gif", matrix->width(), matrix->height(), fill_width, fill_height, &load_sequences, &err_msg)){
-    gifInfo.currentGIF = 0; //loading gif
-    printf("Loading Frames: %d \n",load_sequences.size());
-    for (size_t i = 0; i < load_sequences.size() - 1; ++i){
-        printf("i:%d\n", i);
-        const Magick::Image &load = load_sequences[i];
-        StoreInStream(load);
-        gifInfo.currentFrame = i;
-    }
-    //loadingScreen = std::thread(DisplayAnimation, file_imgs[0], matrix, offscreen_canvas);
-    while(1){
-    DisplayAnimation(file_imgs[0], matrix, offscreen_canvas);
-
-    }
-    printf("OK\n");
-  }else{
-    perror("Loading gif not found (./gifs/loading.gif)");
-  }
-  //-------------------------------------------------------
   printf("Analyzing Gifs...\n");
 
   for (int imgarg = optind; imgarg < argc; ++imgarg)
   {
-    gifInfo.currentGIF = imgarg;
+    gifInfo.currentGIF = imgarg - 1;
     const char *filename = argv[imgarg];
     FileInfo *file_info = NULL;
 
@@ -810,6 +810,13 @@ int main(int argc, char *argv[])
           delay_time_us = 100 * 1000; // 1/10sec
         StoreInStream(img);
         gifInfo.currentFrame = i;
+      }
+
+      //------------------LOADING SCREEN -------------------
+      if(imgarg == 1){
+          gifInfo.loadingScreenFrameCount = image_sequence.size();
+          printf("Start Loading Gif...\n")
+          loadingScreen = std::thread(loadingScreenFunction, matrix);
       }
     }
     else
@@ -857,8 +864,9 @@ int main(int argc, char *argv[])
   }
 
   printf(" OK\n");
-  // loadingScreen.detach();
-  // gifInfo.currentGIF = 1; //first gif
+  loadingScreen.detach();
+  
+  gifInfo.currentGIF = 1; //first gif
   
 
   if (stream_output)
@@ -915,8 +923,7 @@ int main(int argc, char *argv[])
   //------------------------------------
   do
   {
-    DisplayAnimation(file_imgs[0], matrix, offscreen_canvas);
-
+    DisplayAnimation(matrix);
   } while (!interrupt_received);
 
   if (interrupt_received)
