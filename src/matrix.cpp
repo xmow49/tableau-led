@@ -35,7 +35,7 @@
 #include <nlohmann/json.hpp>
 #include <wiringPi.h>
 
-#include <boost/asio.hpp>  
+#include <boost/asio.hpp>
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
 
@@ -93,9 +93,6 @@ struct GifInfo
 MatrixAnimationBuffer matrixGifsList[6];
 GifInfo gifInfo;
 volatile bool interrupt_received = false;
-
-int fd;
-int wd;
 
 //-----------------------------------------------------------------------------
 
@@ -390,11 +387,11 @@ void DisplayAnimation(RGBMatrix *matrix) // fonction appeler pour afficher les g
     {
       if (currentSensor[i] < smoothSensorsValues[i]) // si la nouvelle valeur du capteur est inférieur a la dernière enregistrer,
       {
-        smoothSensorsValues[i]-=2; // on décrémente de 1
+        smoothSensorsValues[i] -= 2; // on décrémente de 1
       }
       else if (currentSensor[i] > smoothSensorsValues[i]) // si la nouvelle valeur du capteur est supérieur a la dernière enregistrer,
       {
-        smoothSensorsValues[i]+=2; // on incrémente de 1
+        smoothSensorsValues[i] += 2; // on incrémente de 1
       }
     }
     if (DEBUG)
@@ -452,154 +449,152 @@ static int usage(const char *progname) // fontion qui retourne la page d'aide, m
   return 1;
 }
 
-
 void WebSocketServer()
 {
-    while(1){
-      bool wantReset = false;
-    
-      auto const address = net::ip::make_address("0.0.0.0");
-      auto const port = static_cast<unsigned short>(std::atoi("8083"));
+  while (1)
+  {
+    bool wantReset = false;
 
-      net::io_context ioc{1};
+    auto const address = net::ip::make_address("0.0.0.0");
+    auto const port = static_cast<unsigned short>(std::atoi("8083"));
 
-      tcp::acceptor acceptor{ioc, {address, port}};
+    net::io_context ioc{1};
 
-      tcp::socket socket{ioc};
+    tcp::acceptor acceptor{ioc, {address, port}};
 
-      acceptor.accept(socket);
-      std::cout << "New WebSocket Connection" << std::endl;
-      auto q = std::move(socket);
-      websocket::stream<tcp::socket> ws{std::move(const_cast<tcp::socket &>(q))};
+    tcp::socket socket{ioc};
 
-      // Set a decorator to change the Server of the handshake
-      // no need to set. It ıs not necessary
-      // ws.set_option(websocket::stream_base::decorator(
-      //     [](websocket::response_type &res)
-      //     {
-      //         res.set(http::field::server,
-      //                 std::string(BOOST_BEAST_VERSION_STRING) +
-      //                     " websocket-server-sync");
-      //     }));
-      // Accept the websocket handshake
-      ws.accept();
+    acceptor.accept(socket);
+    std::cout << "New WebSocket Connection" << std::endl;
+    auto q = std::move(socket);
+    websocket::stream<tcp::socket> ws{std::move(const_cast<tcp::socket &>(q))};
 
-      while (!wantReset)
+    // Set a decorator to change the Server of the handshake
+    // no need to set. It ıs not necessary
+    // ws.set_option(websocket::stream_base::decorator(
+    //     [](websocket::response_type &res)
+    //     {
+    //         res.set(http::field::server,
+    //                 std::string(BOOST_BEAST_VERSION_STRING) +
+    //                     " websocket-server-sync");
+    //     }));
+    // Accept the websocket handshake
+    ws.accept();
+
+    while (!wantReset)
+    {
+      try
       {
-          try
-          {
-              beast::flat_buffer buffer;
-              ws.read(buffer);// Read a message
+        beast::flat_buffer buffer;
+        ws.read(buffer); // Read a message
 
-              std::string recevied = beast::buffers_to_string(buffer.data());
-              //std::cout << "New Message from WebSocket: " << recevied << std::endl;
-            
-              beast::flat_buffer response;
-              beast::ostream(response) << "OK";
-              ws.write(response.data());
+        std::string recevied = beast::buffers_to_string(buffer.data());
+        // std::cout << "New Message from WebSocket: " << recevied << std::endl;
 
-              //------------------------------
-              json j_complete = json::parse(recevied);
-              // std::cout << std::setw(4) << j_complete << std::endl;
-              // std::cout << std::setw(4) << j_complete["MODE"] << std::endl;
+        beast::flat_buffer response;
+        beast::ostream(response) << "OK";
+        ws.write(response.data());
 
-              std::string to = j_complete["TO"];
-              if (to == "CPP")
-              {
-                // printf("ITS for me\n");
-              }
-              std::string mode = j_complete["MODE"];
+        //------------------------------
+        json j_complete = json::parse(recevied);
+        // std::cout << std::setw(4) << j_complete << std::endl;
+        // std::cout << std::setw(4) << j_complete["MODE"] << std::endl;
 
-              if (mode == "GIF")
-              {
-                printf("ITS a GIF\n");
-
-                gifInfo.filterEnable = true; // active le filtre
-
-                std::string gif = j_complete["GIF"];
-                gifInfo.currentGIF = atoi(gif.c_str()); // applique le changement
-
-                std::string speed = j_complete["SPEED"];
-                gifInfo.currentSpeed = atoi(speed.c_str()); // applique le changement
-                printf("currentSpeed: %d\n", gifInfo.currentSpeed);
-              }
-              else if (mode == "DRAW")
-              {
-                if (jsonKeyExists(j_complete, "DRAW"))
-                {
-                  if (j_complete["DRAW"] == "CLEAR")
-                  {
-                    // clear matrix
-                    printf("Clearing the matrix...\n");
-                    for (uint8_t y = 0; y < 128; y++)
-                    {
-                      for (uint8_t x = 0; x < 128; x++)
-                      {
-                        matrixGifsList[5].animation[0].buffer[y][x].red = 0;
-                        matrixGifsList[5].animation[0].buffer[y][x].green = 0;
-                        matrixGifsList[5].animation[0].buffer[y][x].blue = 0;
-                      }
-                    }
-                  }
-                }
-
-                else
-                {
-                  gifInfo.currentGIF = 5;                     // draw mode
-                  gifInfo.filterEnable = false;               // enlève le filtre de couleur
-                  matrixGifsList[5].currentGifFrameCount = 2; // gif de 2 frame
-
-                  vector<int> color = j_complete["COLOR"];
-                  vector<int> leds = j_complete["LEDS"];
-                  //std::cout << leds.size() << '\n';
-                  for (uint8_t i = 0; i < leds.size(); i++) // pour chaque led
-                  {
-                    int y = leds.at(i) / 128;
-                    int x = leds.at(i) % 128;
-                    // printf("LED: X:%d Y:%d\n", x, y);
-                    matrixGifsList[5].animation[0].buffer[y][x].red = color.at(0);
-                    matrixGifsList[5].animation[0].buffer[y][x].green = color.at(1);
-                    matrixGifsList[5].animation[0].buffer[y][x].blue = color.at(2);
-                  }
-                }
-              }
-
-          }
-          catch (beast::system_error const &se)
-          {
-              if (se.code() != websocket::error::closed)
-              {
-                  std::cerr << "Error: " << se.code().message() << std::endl;
-                  std::cout << "Reseting Websocket Server..." << std::endl;
-                  wantReset = true;
-                  break;
-              }
-          }
-      }
-    }
-}
-
-
-void loadingScreenFunction(RGBMatrix *matrix){
-  while(gifInfo.loadingScreenState){
-    //DisplayAnimation(matrix);
-      FrameCanvas *offscreen_canvas = matrix->CreateFrameCanvas();
-      for (uint16_t frame = 0; (frame < gifInfo.loadingScreenFrameCount - 1) && !interrupt_received; frame++)
-      {
-        for (uint16_t y = 0; y < 128; y++)
+        std::string to = j_complete["TO"];
+        if (to == "CPP")
         {
-          for (uint16_t x = 0; x < 128; x++)
+          // printf("ITS for me\n");
+        }
+        std::string mode = j_complete["MODE"];
+
+        if (mode == "GIF")
+        {
+          printf("ITS a GIF\n");
+
+          gifInfo.filterEnable = true; // active le filtre
+
+          std::string gif = j_complete["GIF"];
+          gifInfo.currentGIF = atoi(gif.c_str()); // applique le changement
+
+          std::string speed = j_complete["SPEED"];
+          gifInfo.currentSpeed = atoi(speed.c_str()); // applique le changement
+          printf("currentSpeed: %d\n", gifInfo.currentSpeed);
+        }
+        else if (mode == "DRAW")
+        {
+          if (jsonKeyExists(j_complete, "DRAW"))
           {
-              offscreen_canvas->SetPixel(x, y,
-                                        matrixGifsList[0].animation[frame].buffer[y][x].red,
-                                        matrixGifsList[0].animation[frame].buffer[y][x].green,
-                                        matrixGifsList[0].animation[frame].buffer[y][x].blue);
-            
+            if (j_complete["DRAW"] == "CLEAR")
+            {
+              // clear matrix
+              printf("Clearing the matrix...\n");
+              for (uint8_t y = 0; y < 128; y++)
+              {
+                for (uint8_t x = 0; x < 128; x++)
+                {
+                  matrixGifsList[5].animation[0].buffer[y][x].red = 0;
+                  matrixGifsList[5].animation[0].buffer[y][x].green = 0;
+                  matrixGifsList[5].animation[0].buffer[y][x].blue = 0;
+                }
+              }
+            }
+          }
+
+          else
+          {
+            gifInfo.currentGIF = 5;                     // draw mode
+            gifInfo.filterEnable = false;               // enlève le filtre de couleur
+            matrixGifsList[5].currentGifFrameCount = 2; // gif de 2 frame
+
+            vector<int> color = j_complete["COLOR"];
+            vector<int> leds = j_complete["LEDS"];
+            // std::cout << leds.size() << '\n';
+            for (uint8_t i = 0; i < leds.size(); i++) // pour chaque led
+            {
+              int y = leds.at(i) / 128;
+              int x = leds.at(i) % 128;
+              // printf("LED: X:%d Y:%d\n", x, y);
+              matrixGifsList[5].animation[0].buffer[y][x].red = color.at(0);
+              matrixGifsList[5].animation[0].buffer[y][x].green = color.at(1);
+              matrixGifsList[5].animation[0].buffer[y][x].blue = color.at(2);
+            }
           }
         }
-        offscreen_canvas = matrix->SwapOnVSync(offscreen_canvas, 1);
-        SleepMillis((15 * (100 - gifInfo.currentSpeed)) / 100);
       }
+      catch (beast::system_error const &se)
+      {
+        if (se.code() != websocket::error::closed)
+        {
+          std::cerr << "Error: " << se.code().message() << std::endl;
+          std::cout << "Reseting Websocket Server..." << std::endl;
+          wantReset = true;
+          break;
+        }
+      }
+    }
+  }
+}
+
+void loadingScreenFunction(RGBMatrix *matrix)
+{
+  while (gifInfo.loadingScreenState)
+  {
+    FrameCanvas *offscreen_canvas = matrix->CreateFrameCanvas();
+    for (uint16_t frame = 0; (frame < gifInfo.loadingScreenFrameCount - 1) && !interrupt_received; frame++)
+    {
+      for (uint16_t y = 0; y < 128; y++)
+      {
+        for (uint16_t x = 0; x < 128; x++)
+        {
+          offscreen_canvas->SetPixel(x, y,
+                                     matrixGifsList[0].animation[frame].buffer[y][x].red,
+                                     matrixGifsList[0].animation[frame].buffer[y][x].green,
+                                     matrixGifsList[0].animation[frame].buffer[y][x].blue);
+        }
+      }
+      offscreen_canvas = matrix->SwapOnVSync(offscreen_canvas, 1);
+      SleepMillis(200);
+    }
   }
 }
 
@@ -607,28 +602,30 @@ int main(int argc, char *argv[])
 {
 
   wiringPiSetup(); // initialisation des GPIO
-  
+
   std::thread CheckSensor(sensorLoop, 5, 200); // thread qui va lire les capteurs
-  std::thread CheckWebSocket(WebSocketServer);
+  std::thread CheckWebSocket(WebSocketServer); // thread qui gère le websocket
 
-  Magick::InitializeMagick(*argv); // Initialize ImageMagick
+  Magick::InitializeMagick(*argv); // Initialize ImageMagick (pour la matrice)
 
-  RGBMatrix::Options matrix_options; // options for the matrix
+  RGBMatrix::Options matrix_options; // options pour la matrice
   //---------- Matrix options ----------
-  matrix_options.rows = 64;
-  matrix_options.cols = 64;
-  matrix_options.chain_length = 2;
-  matrix_options.parallel = 2;
-  // matrix_options.show_refresh_rate = true;
-  matrix_options.brightness = 100;
+  //-------Pixel Pour UN PANNEAU-------
+  matrix_options.rows = MATRIX_ROWS;
+  matrix_options.cols = MATRIX_COLS;
 
+  //------regalge de la disposition de panneaux-------
+  // on a 4 panneaux de 64x64 --> 128x128 pixels
+  // ils sont disposer en carrés donc: 2x2 panneaus de 64x64
+  matrix_options.chain_length = MATRIX_CHAIN; // 12 max
+  matrix_options.parallel = MATRIX_PARALLEL;     // 3 MAX (il faut cabler différament pour en ajouter un 3eme)
+
+  matrix_options.brightness = 100; // luminosité au max; on gère ca plus tard avec le filtre
+
+  // options suplementaires
   matrix_options.pwm_bits = 11;
   matrix_options.pwm_lsb_nanoseconds = 50;
-
-  //matrix_options.disable_hardware_pulsing = true;
-
   //-------------------------------------
-
 
   rgb_matrix::RuntimeOptions runtime_opt;
   if (!rgb_matrix::ParseOptionsFromFlags(&argc, &argv,
@@ -637,20 +634,8 @@ int main(int argc, char *argv[])
     return usage(argv[0]);
   }
 
-  bool do_forever = false;
-  bool do_center = false;
-  bool do_shuffle = false;
-
-  // We remember ImageParams for each image, which will change whenever
-  // there is a flag modifying them. This map keeps track of filenames
-  // and their image params (also for unrelated elements of argv[], but doesn't
-  // matter).
-  // We map the pointer instad of the string of the argv parameter so that
-  // we can have two times the same image on the commandline list with different
-  // parameters.
   std::map<const void *, struct ImageParams> filename_params;
 
-  // Set defaults.
   ImageParams img_param;
   for (int i = 0; i < argc; ++i)
   {
@@ -675,12 +660,6 @@ int main(int argc, char *argv[])
       break;
     case 'D':
       img_param.anim_delay_ms = atoi(optarg);
-      break;
-    case 'f':
-      do_forever = true;
-      break;
-    case 'C':
-      do_center = true;
       break;
     case 's':
       do_shuffle = true;
@@ -768,12 +747,14 @@ int main(int argc, char *argv[])
 
   const tmillis_t start_load = GetTimeInMillis();
   fprintf(stderr, "Loading %d files...\n", argc - optind);
-  // Preparing all the images beforehand as the Pi might be too slow to
-  // be quickly switching between these. So preprocess.
+
+  // --------------- Load images ---------------
+  // on va charger tous les gifs dans le tableau matrixGifsList[]
+  // ya encore le code de base de la librairie, mais ca marche
   std::vector<FileInfo *> file_imgs;
   std::string err_msg;
   printf("Loading...\n");
-  std::thread loadingScreen;
+  std::thread loadingScreenThread;
   printf("Analyzing Gifs...\n");
 
   for (int imgarg = optind; imgarg < argc; ++imgarg)
@@ -782,7 +763,6 @@ int main(int argc, char *argv[])
     const char *filename = argv[imgarg];
     FileInfo *file_info = NULL;
 
-    
     std::vector<Magick::Image> image_sequence;
     if (LoadImageAndScale(filename, matrix->width(), matrix->height(),
                           fill_width, fill_height, &image_sequence, &err_msg))
@@ -814,44 +794,17 @@ int main(int argc, char *argv[])
       }
 
       //------------------LOADING SCREEN -------------------
-      if(imgarg == 1){
-          gifInfo.loadingScreenFrameCount = image_sequence.size();
-          printf("Start Loading Gif...\n");
-          gifInfo.loadingScreenState = true;
-          loadingScreen = std::thread(loadingScreenFunction, matrix);
+      if (imgarg == 1)
+      {
+        gifInfo.loadingScreenFrameCount = image_sequence.size();
+        printf("Start Loading Gif...\n");
+        gifInfo.loadingScreenState = true;
+        loadingScreenThread = std::thread(loadingScreenFunction, matrix);
       }
     }
     else
     {
-      // Ok, not an image. Let's see if it is one of our streams.
-      int fd = open(filename, O_RDONLY);
-      if (fd >= 0)
-      {
-        file_info = new FileInfo();
-        file_info->params = filename_params[filename];
-        file_info->content_stream = new rgb_matrix::FileStreamIO(fd);
-        StreamReader reader(file_info->content_stream);
-        if (reader.GetNext(offscreen_canvas, NULL))
-        { // header+size ok
-          file_info->is_multi_frame = reader.GetNext(offscreen_canvas, NULL);
-          reader.Rewind();
-          if (global_stream_writer)
-          {
-            CopyStream(&reader, global_stream_writer, offscreen_canvas);
-          }
-        }
-        else
-        {
-          err_msg = "Can't read as image or compatible stream";
-          delete file_info->content_stream;
-          delete file_info;
-          file_info = NULL;
-        }
-      }
-      else
-      {
-        perror("Opening file");
-      }
+      perror("Opening file");
     }
 
     if (file_info)
@@ -865,12 +818,11 @@ int main(int argc, char *argv[])
     }
   }
 
-  printf("OK\n");
-  gifInfo.loadingScreenState = false;
-  loadingScreen.detach();
+  printf("Start OK\n");
+  gifInfo.loadingScreenState = false; // on arrete le loading screen
+  loadingScreenThread.detach();       // on arrete le loading screen
 
-  gifInfo.currentGIF = 1; //first gif
-  
+  gifInfo.currentGIF = 1; // et on choisi le 1er gif
 
   if (stream_output)
   {
@@ -882,11 +834,6 @@ int main(int argc, char *argv[])
                       "this can now be opened with led-image-viewer with the exact same panel configuration settings such as rows, chain, parallel and hardware-mapping\n",
               stream_output);
     }
-    if (do_shuffle)
-      fprintf(stderr, "Note: -s (shuffle) does not have an effect when generating streams.\n");
-    if (do_forever)
-      fprintf(stderr, "Note: -f (forever) does not have an effect when generating streams.\n");
-    // Done, no actual output to matrix.
     return 0;
   }
 
@@ -920,30 +867,26 @@ int main(int argc, char *argv[])
   fprintf(stderr, "Loading took %.3fs; now: Display.\n",
           (GetTimeInMillis() - start_load) / 1000.0);
 
-  // signal pour fermer le programme
+  // signal pour fermer le programme (CTRL+C)
   signal(SIGTERM, InterruptHandler);
   signal(SIGINT, InterruptHandler);
   //------------------------------------
-  do
-  {
-    DisplayAnimation(matrix);
-  } while (!interrupt_received);
 
-  if (interrupt_received)
+  //----------------- BOUCLE PRINCIPALE --------------
+  while (!interrupt_received) // tant que l'utilisateur n'a pas appuyé sur CTRL+C
+  {
+    DisplayAnimation(matrix); // on affiche l'animation
+  }
+
+  if (interrupt_received) // si l'utilisateur a appuyé sur CTRL+C
   {
     fprintf(stderr, "Caught signal. Exiting.\n");
   }
 
-  // Animation finished. Shut down the RGB matrix.
-  matrix->Clear();
-  delete matrix;
-  // Leaking the FileInfos, but don't care at program end.
+  matrix->Clear(); // on efface l'écran
+  delete matrix;   // on détruit la matrix
 
-  CheckSensor.detach();
-  CheckWebSocket.detach();
-
-  inotify_rm_watch(fd, wd);
-  close(fd);
-
+  CheckSensor.detach();    // on arrete le thread du capteur
+  CheckWebSocket.detach(); // on arrete le thread du websocket
   return 0;
 }
