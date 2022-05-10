@@ -758,16 +758,20 @@ int main(int argc, char *argv[])
     gifInfo.currentGIF = 0; //loading gif
     printf("Loading Frames: %d \n",load_sequences.size());
     for (size_t i = 0; i < load_sequences.size() - 1; ++i){
+        printf("i:%d\n", i);
         const Magick::Image &load = load_sequences[i];
         StoreInStream(load);
         gifInfo.currentFrame = i;
     }
-    loadingScreen = std::thread(DisplayAnimation, file_imgs[0], matrix, offscreen_canvas);
+    //loadingScreen = std::thread(DisplayAnimation, file_imgs[0], matrix, offscreen_canvas);
+    while(1){
+    DisplayAnimation(file_imgs[0], matrix, offscreen_canvas);
+
+    }
     printf("OK\n");
   }else{
     perror("Loading gif not found (./gifs/loading.gif)");
   }
-
   //-------------------------------------------------------
   printf("Analyzing Gifs...\n");
 
