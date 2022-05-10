@@ -83,6 +83,7 @@ struct GifInfo
   uint8_t currentSpeed = 100;
   bool filterEnable = true;
   uint8_t loadingScreenFrameCount = 0;
+  bool loadingScreenState = false;
 };
 
 //-----------------------------------------------------------------------------
@@ -580,7 +581,7 @@ void WebSocketServer()
 
 
 void loadingScreenFunction(RGBMatrix *matrix){
-  while(1){
+  while(gifInfo.loadingScreenState){
     //DisplayAnimation(matrix);
       FrameCanvas *offscreen_canvas = matrix->CreateFrameCanvas();
       for (uint16_t frame = 0; (frame < gifInfo.loadingScreenFrameCount - 1) && !interrupt_received; frame++)
@@ -815,7 +816,8 @@ int main(int argc, char *argv[])
       //------------------LOADING SCREEN -------------------
       if(imgarg == 1){
           gifInfo.loadingScreenFrameCount = image_sequence.size();
-          printf("Start Loading Gif...\n")
+          printf("Start Loading Gif...\n");
+          gifInfo.loadingScreenState = true;
           loadingScreen = std::thread(loadingScreenFunction, matrix);
       }
     }
@@ -863,9 +865,10 @@ int main(int argc, char *argv[])
     }
   }
 
-  printf(" OK\n");
+  printf("OK\n");
+  gifInfo.loadingScreenState = false;
   loadingScreen.detach();
-  
+
   gifInfo.currentGIF = 1; //first gif
   
 
