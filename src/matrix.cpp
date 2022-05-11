@@ -295,7 +295,7 @@ static void StoreInStream(const Magick::Image &img) // récupère les gif et les
   }
 }
 
-static void CopyStream(rgb_matrix::StreamReader *r,
+/*static void CopyStream(rgb_matrix::StreamReader *r,
                        rgb_matrix::StreamWriter *w,
                        rgb_matrix::FrameCanvas *scratch) // jsp a quoi ca sert, mais la lib a besoin de ca
 {
@@ -305,7 +305,7 @@ static void CopyStream(rgb_matrix::StreamReader *r,
     w->Stream(*scratch, delay_us);
   }
 }
-
+*/
 // Load still image or animation.
 // Scale, so that it fits in "width" and "height" and store in "result".
 static bool LoadImageAndScale(const char *filename,
@@ -509,16 +509,14 @@ void WebSocketServer()
 
         if (mode == "GIF")
         {
-          printf("ITS a GIF\n");
-
+          //printf("ITS a GIF\n");
           gifInfo.filterEnable = true; // active le filtre
-
           std::string gif = j_complete["GIF"];
           gifInfo.currentGIF = atoi(gif.c_str()); // applique le changement
 
           std::string speed = j_complete["SPEED"];
           gifInfo.currentSpeed = atoi(speed.c_str()); // applique le changement
-          printf("currentSpeed: %d\n", gifInfo.currentSpeed);
+          //printf("currentSpeed: %d\n", gifInfo.currentSpeed);
         }
         else if (mode == "DRAW")
         {
@@ -647,7 +645,7 @@ int main(int argc, char *argv[])
   int opt;
   while ((opt = getopt(argc, argv, "w:t:l:fr:c:P:LhCR:sO:V:D:")) != -1)
   {
-    switch (opt)
+    /*switch (opt)
     {
     case 'w':
       img_param.wait_ms = roundf(atof(optarg) * 1000.0f);
@@ -660,9 +658,6 @@ int main(int argc, char *argv[])
       break;
     case 'D':
       img_param.anim_delay_ms = atoi(optarg);
-      break;
-    case 's':
-      do_shuffle = true;
       break;
     case 'r':
       fprintf(stderr, "Instead of deprecated -r, use --led-rows=%s instead.\n",
@@ -698,7 +693,7 @@ int main(int argc, char *argv[])
     case 'h':
     default:
       return usage(argv[0]);
-    }
+    }*/
 
     // Starting from the current file,
     // the latest change.
@@ -721,7 +716,7 @@ int main(int argc, char *argv[])
   if (matrix == NULL)
     return 1;
 
-  FrameCanvas *offscreen_canvas = matrix->CreateFrameCanvas();
+  //FrameCanvas *offscreen_canvas = matrix->CreateFrameCanvas();
 
   printf("Size: %dx%d. Hardware gpio mapping: %s\n",
          matrix->width(), matrix->height(), matrix_options.hardware_mapping);
