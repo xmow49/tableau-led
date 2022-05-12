@@ -44,6 +44,7 @@ Dans le dossier src, faites `make` puis attendre la fin de la compilation.
 
 ## Utilisation
 Pour lancer le programme, executez le fichier `matrix` présent dans le dossier src. Ajouter les paths des gifs comme arguments
+
 `sudo ./matrix ./gifs/loading.gif ./gifs/1.gif ./gifs/2.gif ./gifs/3.gif ./gifs/4.gif` 
 
 Le 1er gif sera afficher comme écran de chargement lors du démmarage.
