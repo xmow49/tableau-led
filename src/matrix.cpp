@@ -815,8 +815,7 @@ int main(int argc, char *argv[])
 
   printf("Start OK\n");
   gifInfo.loadingScreenState = false; // on arrete le loading screen
-  loadingScreenThread.detach();       // on arrete le loading screen
-
+  loadingScreenThread.join();       // on attend la fin du loading screen
   gifInfo.currentGIF = 1; // et on choisi le 1er gif
 
   if (stream_output)
