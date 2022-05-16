@@ -287,25 +287,14 @@ static void StoreInStream(const Magick::Image &img) // récupère les gif et les
       const Magick::Color &c = img.pixelColor(x, y);
       if (c.alphaQuantum() < 256)
       {
-        matrixGifsList[gifInfo.currentGIF].animation[gifInfo.currentFrame].buffer[y][x].red = fixBlack(c.redQuantum());
-        matrixGifsList[gifInfo.currentGIF].animation[gifInfo.currentFrame].buffer[y][x].green = fixBlack(c.greenQuantum());
+        matrixGifsList[gifInfo.currentGIF].animation[gifInfo.currentFrame].buffer[y][x].red = fixBlack(c.redQuantum()); //on fix le black car quand on a 2-3 en valeur; les led s'allume un peu et c'est moche
+        matrixGifsList[gifInfo.currentGIF].animation[gifInfo.currentFrame].buffer[y][x].green = fixBlack(c.greenQuantum()); //donc on remet a 0 0 0 pour avoir un noir parfait
         matrixGifsList[gifInfo.currentGIF].animation[gifInfo.currentFrame].buffer[y][x].blue = fixBlack(c.blueQuantum());
       }
     }
   }
 }
 
-/*static void CopyStream(rgb_matrix::StreamReader *r,
-                       rgb_matrix::StreamWriter *w,
-                       rgb_matrix::FrameCanvas *scratch) // jsp a quoi ca sert, mais la lib a besoin de ca
-{
-  uint32_t delay_us;
-  while (r->GetNext(scratch, &delay_us))
-  {
-    w->Stream(*scratch, delay_us);
-  }
-}
-*/
 // Load still image or animation.
 // Scale, so that it fits in "width" and "height" and store in "result".
 static bool LoadImageAndScale(const char *filename,
@@ -341,39 +330,6 @@ static bool LoadImageAndScale(const char *filename,
   {
     result->push_back(frames[0]); // just a single still image.
   }
-
-  const int img_width = (*result)[0].columns();
-  const int img_height = (*result)[0].rows();
-  const float width_fraction = (float)target_width / img_width;
-  const float height_fraction = (float)target_height / img_height;
-  if (fill_width && fill_height)
-  {
-    // Scrolling diagonally. Fill as much as we can get in available space.
-    // Largest scale fraction determines that.
-    const float larger_fraction = (width_fraction > height_fraction)
-                                      ? width_fraction
-                                      : height_fraction;
-    target_width = (int)roundf(larger_fraction * img_width);
-    target_height = (int)roundf(larger_fraction * img_height);
-  }
-  else if (fill_height)
-  {
-    // Horizontal scrolling: Make things fit in vertical space.
-    // While the height constraint stays the same, we can expand to full
-    // width as we scroll along that axis.
-    target_width = (int)roundf(height_fraction * img_width);
-  }
-  else if (fill_width)
-  {
-    // dito, vertical. Make things fit in horizontal space.
-    target_height = (int)roundf(width_fraction * img_height);
-  }
-
-  for (size_t i = 0; i < result->size(); ++i)
-  {
-    (*result)[i].scale(Magick::Geometry(target_width, target_height));
-  }
-
   return true;
 }
 
@@ -429,23 +385,12 @@ void DisplayAnimation(RGBMatrix *matrix) // fonction appeler pour afficher les g
 
 static int usage(const char *progname) // fontion qui retourne la page d'aide, mais elle sert plus a grand chose, jai tous enlever pour simpifier le code
 {
-  fprintf(stderr, "usage: %s [options] <image> [option] [<image> ...]\n",
+  fprintf(stderr, "usage: %s <loading gif> <gif 1> <gif 2> <gif 3> <gif 4>\n",
           progname);
 
-  fprintf(stderr, "C pas ouf ce que ta mis comme parametres");
-
   fprintf(stderr, "\nGeneral LED matrix options:\n");
-  rgb_matrix::PrintMatrixFlags(stderr);
-
-  fprintf(stderr,
-          "\nSwitch time between files: "
-          "-w for static images; -t/-l for animations\n"
-          "Animated gifs: If both -l and -t are given, "
-          "whatever finishes first determines duration.\n");
-
-  fprintf(stderr, "\nThe -w, -t and -l options apply to the following images "
-                  "until a new instance of one of these options is seen.\n"
-                  "So you can choose different durations for different images.\n");
+  fprintf(stderr, "\nExemple:\n");
+  fprintf(stderr, "\n%s ./gifs/loading.gif ./gifs/6.gif ./gifs/4.gif ./gifs/3.gif ./gifs/2.gif\n", progname);
   return 1;
 }
 
@@ -591,7 +536,7 @@ void loadingScreenFunction(RGBMatrix *matrix)
         }
       }
       offscreen_canvas = matrix->SwapOnVSync(offscreen_canvas, 1);
-      SleepMillis(200);
+      SleepMillis(100);
     }
   }
 }
@@ -645,58 +590,6 @@ int main(int argc, char *argv[])
   int opt;
   while ((opt = getopt(argc, argv, "w:t:l:fr:c:P:LhCR:sO:V:D:")) != -1)
   {
-    /*switch (opt)
-    {
-    case 'w':
-      img_param.wait_ms = roundf(atof(optarg) * 1000.0f);
-      break;
-    case 't':
-      img_param.anim_duration_ms = roundf(atof(optarg) * 1000.0f);
-      break;
-    case 'l':
-      img_param.loops = atoi(optarg);
-      break;
-    case 'D':
-      img_param.anim_delay_ms = atoi(optarg);
-      break;
-    case 'r':
-      fprintf(stderr, "Instead of deprecated -r, use --led-rows=%s instead.\n",
-              optarg);
-      matrix_options.rows = atoi(optarg);
-      break;
-    case 'c':
-      fprintf(stderr, "Instead of deprecated -c, use --led-chain=%s instead.\n",
-              optarg);
-      matrix_options.chain_length = atoi(optarg);
-      break;
-    case 'P':
-      matrix_options.parallel = atoi(optarg);
-      break;
-    case 'L':
-      fprintf(stderr, "-L is deprecated. Use\n\t--led-pixel-mapper=\"U-mapper\" --led-chain=4\ninstead.\n");
-      return 1;
-      break;
-    case 'R':
-      fprintf(stderr, "-R is deprecated. "
-                      "Use --led-pixel-mapper=\"Rotate:%s\" instead.\n",
-              optarg);
-      return 1;
-      break;
-    case 'O':
-      stream_output = strdup(optarg);
-      break;
-    case 'V':
-      img_param.vsync_multiple = atoi(optarg);
-      if (img_param.vsync_multiple < 1)
-        img_param.vsync_multiple = 1;
-      break;
-    case 'h':
-    default:
-      return usage(argv[0]);
-    }*/
-
-    // Starting from the current file,
-    // the latest change.
     for (int i = optind; i < argc; ++i)
     {
       filename_params[argv[i]] = img_param;
