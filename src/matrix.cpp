@@ -209,6 +209,8 @@ int getSensor(unsigned char nSensor, int minDistance = 5, int maxDistance = 300)
   }
   // Cancel on timeout.
   if (micros() + 10 > end) //+10 to be sure
+
+
   {
     if (DEBUG)
     {
@@ -257,7 +259,7 @@ void sensorLoop(int minDistance = 5, int maxDistance = 300) // loop qui check le
     SleepMillis(20);
     getSensor(2, minDistance, maxDistance);
     SleepMillis(20);
-    // printf("%d %d %d\n", currentSensor[0], currentSensor[1], currentSensor[2]);
+    //printf("%d %d %d\n", currentSensor[0], currentSensor[1], currentSensor[2]);
   }
 }
 
@@ -364,9 +366,9 @@ void DisplayAnimation(RGBMatrix *matrix) // fonction appeler pour afficher les g
         {
 
           offscreen_canvas->SetPixel(x, y,
-                                     map(smoothSensorsValues[0], 5, MAX_DISTANCE, 255, 20) * matrixGifsList[gifInfo.currentGIF].animation[frame].buffer[y][x].red / 255,
-                                     map(smoothSensorsValues[1], 5, MAX_DISTANCE, 255, 20) * matrixGifsList[gifInfo.currentGIF].animation[frame].buffer[y][x].green / 255,
-                                     map(smoothSensorsValues[2], 5, MAX_DISTANCE, 255, 20) * matrixGifsList[gifInfo.currentGIF].animation[frame].buffer[y][x].blue / 255);
+                                     map(smoothSensorsValues[0], MIN_DISTANCE, MAX_DISTANCE, 255, 20) * matrixGifsList[gifInfo.currentGIF].animation[frame].buffer[y][x].red / 255,
+                                     map(smoothSensorsValues[1], MIN_DISTANCE, MAX_DISTANCE, 255, 20) * matrixGifsList[gifInfo.currentGIF].animation[frame].buffer[y][x].green / 255,
+                                     map(smoothSensorsValues[2], MIN_DISTANCE, MAX_DISTANCE, 255, 20) * matrixGifsList[gifInfo.currentGIF].animation[frame].buffer[y][x].blue / 255);
           // offscreen_canvas->SetPixel(x, y, 255,255,255);
         }
         else
@@ -546,7 +548,7 @@ int main(int argc, char *argv[])
 
   wiringPiSetup(); // initialisation des GPIO
 
-  std::thread CheckSensor(sensorLoop, 5, 200); // thread qui va lire les capteurs
+  std::thread CheckSensor(sensorLoop, MIN_DISTANCE, MAX_DISTANCE); // thread qui va lire les capteurs
   std::thread CheckWebSocket(WebSocketServer); // thread qui gère le websocket
 
   Magick::InitializeMagick(*argv); // Initialize ImageMagick (pour la matrice)
