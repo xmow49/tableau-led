@@ -259,7 +259,7 @@ void sensorLoop(int minDistance = 5, int maxDistance = 300) // loop qui check le
     SleepMillis(20);
     getSensor(2, minDistance, maxDistance);
     SleepMillis(20);
-    //printf("%d %d %d\n", currentSensor[0], currentSensor[1], currentSensor[2]);
+    printf("%d %d %d\n", currentSensor[0], currentSensor[1], currentSensor[2]); //peueter faire val +1
   }
 }
 

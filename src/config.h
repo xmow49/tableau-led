@@ -11,8 +11,8 @@
 #define MATRIX_PARALLEL 2 //3 max
 
 
-#define MAX_DISTANCE 200 // cm
-#define MIN_DISTANCE 10 // cm
+#define MAX_DISTANCE 250 // cm
+#define MIN_DISTANCE 20 // cm
 
 #define EVENT_SIZE (sizeof(struct inotify_event))
 #define BUF_LEN (2048 * (EVENT_SIZE + 16))
