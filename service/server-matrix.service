@@ -1,0 +1,11 @@
+[Unit]
+Description=Server LED Matrix
+
+[Service]
+User=root
+WorkingDirectory=/home/pi/newcode/tableau-led/src
+ExecStart=/bin/node /home/pi/newcode/tableau-led/server/server.js
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

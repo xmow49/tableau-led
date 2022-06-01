@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <link rel='stylesheet' href='css/index.css'>
+    <link rel='stylesheet' href='css/customRadios.css'>
+
+    <link rel="stylesheet" href="dl/mdi/mdi.css" />
+    <link rel="stylesheet" href="dl/colorPicker/colorPicker.css" />
+    <link rel="stylesheet" href="css/popup.css" />
+    <meta name="viewport" content="minimal-ui, width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+</head>
+
+<body>
+    <div class="popup-background" id="popup-background"></div>
+    <div class="popup" id="connect">
+        <h2>Connexion à la matrice...</h2>
+        <div class="spin"></div>
+    </div>
+
+    <div class="popup" id="disconected" style="display: none;">
+        <h2>Erreur de connexion.</h2>
+        <button onclick="socketConnection.connect();">Reconnexion</button>
+    </div>
+    <header>
+        <h1>Matrice LED</h1>
+        <a href="settings.html"><button><span class="mdi mdi-cog"></span></button></a>
+    </header>
+
+    <div class="option-container">
+        <div>
+            <h1>Gif Actuel : <span id="currentPresentGIF"></span></h1>
+        </div>
+        <div>
+            <button class="button-oral" onclick="sendPresentation('previous')">Précedent</button>
+            <button class="button-oral" onclick="sendPresentation('next')">Suivant</button>
+        </div>
+    </div>
+
+</body>
+<script src="js/websocket.js"></script>
+<script src="js/index.js "></script>
+
+<script>
+    var currentGIF = 1;
+
+    function sendPresentation(action){
+        if(action == 'previous'){
+            if(currentGIF <= 1){
+                currentGIF = 1;
+            }else{
+                currentGIF--;
+            }
+        }else if(action == 'next'){
+            if(currentGIF >= 10){
+                currentGIF = 10;
+            }else{
+                currentGIF++;
+            }
+        }
+        document.getElementById("currentPresentGIF").innerHTML = currentGIF;
+        var dataaaaaaaa = {
+            TO: 'CPP',
+            MODE: "GIF",
+            GIF: '' + currentGIF,
+            SPEED: '50',
+        };
+        socket.send(JSON.stringify(dataaaaaaaa));
+    }
+    sendPresentation();
+
+
+</script>
+
+<style>
+
+.button-oral{
+    padding: 20px;
+    border-radius: 20px;
+    font-size: 20px;
+    font-family: 'Open Sans';
+    font-weight: bold;
+}    
+</style>
+
+</html>
