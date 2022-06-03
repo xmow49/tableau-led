@@ -1,10 +1,10 @@
 [Unit]
-Description=Programe du Tableu LED
+Description=Programme du Tableu LED
 
 [Service]
 User=root
-WorkingDirectory=/home/pi/newcode/tableau-led/src
-ExecStart=/home/pi/newcode/tableau-led/src/matrix ./gifs/loading.gif ./gifs/6.gif ./gifs/4.gif ./gifs/3.gif ./gifs/2.gif
+WorkingDirectory=/home/pi/tableau-led/src
+ExecStart=/home/pi/tableau-led/src/matrix ./gifs/loading.gif ./gifs/6.gif ./gifs/4.gif ./gifs/3.gif ./gifs/2.gif
 Restart=always
 
 [Install]

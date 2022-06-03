@@ -3,8 +3,8 @@ Description=Server LED Matrix
 
 [Service]
 User=root
-WorkingDirectory=/home/pi/newcode/tableau-led/src
-ExecStart=/bin/node /home/pi/newcode/tableau-led/server/server.js
+WorkingDirectory=/home/pi/tableau-led/src
+ExecStart=/bin/node /home/pi/tableau-led/server/server.js
 Restart=always
 
 [Install]

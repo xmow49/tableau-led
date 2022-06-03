@@ -7,7 +7,7 @@ http.globalAgent.keepAlive = true;
 
 var app = express();
 
-app.use(express.static('/home/pi/newcode/tableau-led/server'));
+app.use(express.static('/home/pi/tableau-led/server'));
 app.use(bodyParser.urlencoded({ extended: true }));
 
 var server = app.listen(8000);
