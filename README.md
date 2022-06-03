@@ -53,6 +53,10 @@ b. Désinstallation de logiciel qui peuvent rentrer en conflit avec la library d
 
   ```git clone https://github.com/xmow49/tableau-led/```
 
+**6. Redémarrage**
+
+  ```sudo reboot```
+  
 ## Compilation
 La compilation se fait avec make.
 Dans le dossier src, faites `make` puis attendre la fin de la compilation.
