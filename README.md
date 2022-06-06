@@ -3,11 +3,11 @@
 
 
 Code pour contoler une matrice de 128*128 pixels avec un RaspberyPi:
-- affiche des gif
-- modifi la couleur en fonction de la disance devant les 3 capteur ultrasons
-- une interface web pour que les moldu puisent changer de gif, modifier la vitesse et dessiner dessus
+- Affiche des GIF
+- Modifie la couleur en fonction de la distance devant les 3 capteurs ultrasons
+- Une interface Web pour que les utilisateurs puisent changer de GIF, modifier la vitesse et dessiner dessus
 
-Ce projet utilise cette super library qui contient plein d'exemples et de documentations :)
+Ce projet utilise cette librarie très bien faite qui contient plein d'exemples et de documentations :)
 https://github.com/hzeller/rpi-rgb-led-matrix
 
 ## Voici un exemple d'affichage
@@ -23,8 +23,8 @@ sudo apt update -y & sudo apt upgrade -y
 
 **2. Installation de WiringPi**
 
-Cette [library](https://github.com/WiringPi/WiringPi) permet de controler les GPIO facilement en C++
-Comme la library est deprecated on passe par un autre lien
+Cette [library](https://github.com/WiringPi/WiringPi) permet de contrôler les GPIO facilement en C++
+Comme la library est obsolete on passe par un autre lien
 
 ```
 wget https://project-downloads.drogon.net/wiringpi-latest.deb
@@ -38,14 +38,14 @@ Pour tester que c'est correctement installé:
 
 ```sudo apt-get install libboost-all-dev libgraphicsmagick++-dev libwebp-dev nlohmann-json-dev git -y```
 
-**4. Configuration pour faire fonctioner la matrice**
+**4. Configuration pour faire fonctioner la Matrice**
 a. Désactivation du son
 
   `sudo nano /boot/config.txt` 
   
   Remplacer `dtparam=audio=on` par `dtparam=audio=off`
     
-b. Désinstallation de logiciel qui peuvent rentrer en conflit avec la library des matrices
+b. Désinstallation de logiciels qui peuvent rentrer en conflit avec la library des matrices
 
    ```sudo apt-get remove bluez bluez-firmware pi-bluetooth triggerhappy pigpio```
 
@@ -66,4 +66,4 @@ Pour lancer le programme, executez le fichier `matrix` présent dans le dossier 
 
 `sudo ./matrix ./gifs/loading.gif ./gifs/1.gif ./gifs/2.gif ./gifs/3.gif ./gifs/4.gif` 
 
-Le 1er gif sera afficher comme écran de chargement lors du démmarage.
+Le 1er gif sera affiché comme écran de chargement lors du démmarage.
