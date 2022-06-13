@@ -457,7 +457,13 @@ void WebSocketServer()
         if (mode == "GIF")
         {
           //printf("ITS a GIF\n");
-          gifInfo.filterEnable = true; // active le filtre
+          
+          if(jsonKeyExists(j_complete, "FILTER")){
+            gifInfo.filterEnable = j_complete["FILTER"]; // active le filtre
+          }else{
+            gifInfo.filterEnable = true; // active le filtre
+          }
+          
           std::string gif = j_complete["GIF"];
           gifInfo.currentGIF = atoi(gif.c_str()); // applique le changement
 

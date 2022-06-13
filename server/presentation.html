@@ -41,16 +41,17 @@
     </div>
 
     <div class="option-container">
-        <button class="button-oral" onclick="setGif(0)">Diapo 1/2</button>
-        <button class="button-oral" onclick="setGif()">Diapo 3/4</button>
-        <button class="button-oral" onclick="setGif()">Diapo 5/6/7</button>
-        <button class="button-oral" onclick="setGif()">Diapo 8</button>
-        <button class="button-oral" onclick="setGif()">Diapo 9/10</button>
-        <button class="button-oral" onclick="setGif()">Diapo 11/12</button>
-        <button class="button-oral" onclick="setGif()">Diapo 13</button>
-        <button class="button-oral" onclick="setGif()">Diapo 14</button>
-        <button class="button-oral" onclick="setGif()">Diapo 15/16/17</button>
-        <button class="button-oral" onclick="setGif()">Diapo 18</button>
+        <button class="button-oral" onclick="setGif(0, false)">Diapo 1/2</button>
+        <button class="button-oral" onclick="setGif(6, false)">Diapo 3/4</button>
+        <button class="button-oral" onclick="setGif(7, false)">Diapo 5/6/7</button>
+        <button class="button-oral" onclick="setGif(8, false)">Diapo 8</button>
+        <button class="button-oral" onclick="setGif(00000, false)">Diapo 9/10</button>
+        <button class="button-oral" onclick="setGif(9, false)">Diapo 11/12</button>
+        <button class="button-oral" onclick="setGif(5, false)">Diapo 13</button>
+        <button class="button-oral" onclick="setGif(5, false)">Diapo 14</button>
+        <button class="button-oral" onclick="setGif(1, false)">Diapo 15/16/17</button>
+        <button class="button-oral" onclick="setGif(0, false)">Diapo 18</button>
+        <button class="button-oral" onclick="setGif(1, false)">Diapo Fin</button>
     </div>
 
 </body>
@@ -60,12 +61,12 @@
 <script>
     var currentGIF = 1;
 
-    function setGif(gifID){
+    function setGif(gifID, enableFilter){
         currentGIF = gifID;
-        sendPresentation();
+        sendPresentation(undefined, enableFilter);
     }
 
-    function sendPresentation(action){
+    function sendPresentation(action, enableFilter = false){
         if(action == 'previous'){
             if(currentGIF <= 1){
                 currentGIF = 1;
@@ -85,7 +86,9 @@
             MODE: "GIF",
             GIF: '' + currentGIF,
             SPEED: '50',
+            FILTER: enableFilter
         };
+        console.log(dataaaaaaaa);
         socket.send(JSON.stringify(dataaaaaaaa));
     }
     sendPresentation();
