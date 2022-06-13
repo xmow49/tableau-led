@@ -27,7 +27,7 @@
     </div>
     <header>
         <h1>Matrice LED</h1>
-        <a href="settings.html"><button><span class="mdi mdi-cog"></span></button></a>
+        <a href="/"><button class="settings"><span class="mdi mdi-close"></span></button></a>
     </header>
 
     <div class="option-container">
@@ -40,12 +40,30 @@
         </div>
     </div>
 
+    <div class="option-container">
+        <button class="button-oral" onclick="setGif(0)">Diapo 1/2</button>
+        <button class="button-oral" onclick="setGif()">Diapo 3/4</button>
+        <button class="button-oral" onclick="setGif()">Diapo 5/6/7</button>
+        <button class="button-oral" onclick="setGif()">Diapo 8</button>
+        <button class="button-oral" onclick="setGif()">Diapo 9/10</button>
+        <button class="button-oral" onclick="setGif()">Diapo 11/12</button>
+        <button class="button-oral" onclick="setGif()">Diapo 13</button>
+        <button class="button-oral" onclick="setGif()">Diapo 14</button>
+        <button class="button-oral" onclick="setGif()">Diapo 15/16/17</button>
+        <button class="button-oral" onclick="setGif()">Diapo 18</button>
+    </div>
+
 </body>
 <script src="js/websocket.js"></script>
 <script src="js/index.js "></script>
 
 <script>
     var currentGIF = 1;
+
+    function setGif(gifID){
+        currentGIF = gifID;
+        sendPresentation();
+    }
 
     function sendPresentation(action){
         if(action == 'previous'){
@@ -83,7 +101,11 @@
     font-size: 20px;
     font-family: 'Open Sans';
     font-weight: bold;
-}    
+    cursor: pointer;
+}
+.button-oral:hover{
+    border: solid 2px red;
+}
 </style>
 
 </html>
