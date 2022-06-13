@@ -469,7 +469,7 @@ void WebSocketServer()
 
           std::string speed = j_complete["SPEED"];
           gifInfo.currentSpeed = atoi(speed.c_str()); // applique le changement
-          printf("Changment de GIF: GIF%d , Vitesse: %d\n", gifInfo.currentGIF, gifInfo.currentSpeed);
+          printf("Changment de GIF: GIF%d , Vitesse: %d , Filtre: %d\n", gifInfo.currentGIF, gifInfo.currentSpeed, gifInfo.filterEnable);
         }
         else if (mode == "DRAW")
         {
