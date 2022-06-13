@@ -35,8 +35,8 @@
             <h1>Gif Actuel : <span id="currentPresentGIF"></span></h1>
         </div>
         <div>
-            <button class="button-oral" onclick="sendPresentation('previous')">Précedent</button>
-            <button class="button-oral" onclick="sendPresentation('next')">Suivant</button>
+            <!-- <button class="button-oral" onclick="sendPresentation('previous')">Précedent</button>
+            <button class="button-oral" onclick="sendPresentation('next')">Suivant</button> -->
         </div>
     </div>
 
@@ -48,10 +48,10 @@
         <button class="button-oral" onclick="setGif(00000, false)">Diapo 9/10</button>
         <button class="button-oral" onclick="setGif(9, false)">Diapo 11/12</button>
         <button class="button-oral" onclick="setGif(5, false)">Diapo 13</button>
-        <button class="button-oral" onclick="setGif(5, false)">Diapo 14</button>
+        <button class="button-oral" onclick="setGif(5, true)">Diapo 14</button>
         <button class="button-oral" onclick="setGif(1, false)">Diapo 15/16/17</button>
         <button class="button-oral" onclick="setGif(0, false)">Diapo 18</button>
-        <button class="button-oral" onclick="setGif(1, false)">Diapo Fin</button>
+        <button class="button-oral" onclick="setGif(1, true)">Diapo Fin</button>
     </div>
 
 </body>
@@ -105,6 +105,7 @@
     font-family: 'Open Sans';
     font-weight: bold;
     cursor: pointer;
+    width: 200px;
 }
 .button-oral:hover{
     border: solid 2px red;

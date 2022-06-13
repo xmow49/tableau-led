@@ -68,11 +68,11 @@ struct MatrixLedData
 };
 struct MatrixFrameBuffer
 {
-  MatrixLedData buffer[128][128]; //une frame de 128*128 pixel
+  MatrixLedData buffer[128][128]; // une frame de 128*128 pixel
 };
 struct MatrixAnimationBuffer
 {
-  MatrixFrameBuffer animation[400]; //400 frame max par gif
+  MatrixFrameBuffer animation[400]; // 400 frame max par gif
   uint16_t currentGifFrameCount = 0;
 };
 
@@ -210,7 +210,6 @@ int getSensor(unsigned char nSensor, int minDistance = 5, int maxDistance = 300)
   // Cancel on timeout.
   if (micros() + 10 > end) //+10 to be sure
 
-
   {
     if (DEBUG)
     {
@@ -259,7 +258,7 @@ void sensorLoop(int minDistance = 5, int maxDistance = 300) // loop qui check le
     SleepMillis(20);
     getSensor(2, minDistance, maxDistance);
     SleepMillis(20);
-    //printf("%d %d %d\n", currentSensor[0], currentSensor[1], currentSensor[2]); //peueter faire val +1
+    // printf("%d %d %d\n", currentSensor[0], currentSensor[1], currentSensor[2]); //peueter faire val +1
   }
 }
 
@@ -289,8 +288,8 @@ static void StoreInStream(const Magick::Image &img) // récupère les gif et les
       const Magick::Color &c = img.pixelColor(x, y);
       if (c.alphaQuantum() < 256)
       {
-        matrixGifsList[gifInfo.currentGIF].animation[gifInfo.currentFrame].buffer[y][x].red = fixBlack(c.redQuantum()); //on fix le black car quand on a 2-3 en valeur; les led s'allume un peu et c'est moche
-        matrixGifsList[gifInfo.currentGIF].animation[gifInfo.currentFrame].buffer[y][x].green = fixBlack(c.greenQuantum()); //donc on remet a 0 0 0 pour avoir un noir parfait
+        matrixGifsList[gifInfo.currentGIF].animation[gifInfo.currentFrame].buffer[y][x].red = fixBlack(c.redQuantum());     // on fix le black car quand on a 2-3 en valeur; les led s'allume un peu et c'est moche
+        matrixGifsList[gifInfo.currentGIF].animation[gifInfo.currentFrame].buffer[y][x].green = fixBlack(c.greenQuantum()); // donc on remet a 0 0 0 pour avoir un noir parfait
         matrixGifsList[gifInfo.currentGIF].animation[gifInfo.currentFrame].buffer[y][x].blue = fixBlack(c.blueQuantum());
       }
     }
@@ -456,14 +455,17 @@ void WebSocketServer()
 
         if (mode == "GIF")
         {
-          //printf("ITS a GIF\n");
-          
-          if(jsonKeyExists(j_complete, "FILTER")){
+          // printf("ITS a GIF\n");
+
+          if (jsonKeyExists(j_complete, "FILTER"))
+          {
             gifInfo.filterEnable = j_complete["FILTER"]; // active le filtre
-          }else{
+          }
+          else
+          {
             gifInfo.filterEnable = true; // active le filtre
           }
-          
+
           std::string gif = j_complete["GIF"];
           gifInfo.currentGIF = atoi(gif.c_str()); // applique le changement
 
@@ -555,7 +557,7 @@ int main(int argc, char *argv[])
   wiringPiSetup(); // initialisation des GPIO
 
   std::thread CheckSensor(sensorLoop, MIN_DISTANCE, MAX_DISTANCE); // thread qui va lire les capteurs
-  std::thread CheckWebSocket(WebSocketServer); // thread qui gère le websocket
+  std::thread CheckWebSocket(WebSocketServer);                     // thread qui gère le websocket
 
   Magick::InitializeMagick(*argv); // Initialize ImageMagick (pour la matrice)
 
@@ -569,7 +571,7 @@ int main(int argc, char *argv[])
   // on a 4 panneaux de 64x64 --> 128x128 pixels
   // ils sont disposer en carrés donc: 2x2 panneaus de 64x64
   matrix_options.chain_length = MATRIX_CHAIN; // 12 max
-  matrix_options.parallel = MATRIX_PARALLEL;     // 3 MAX (il faut cabler différament pour en ajouter un 3eme)
+  matrix_options.parallel = MATRIX_PARALLEL;  // 3 MAX (il faut cabler différament pour en ajouter un 3eme)
 
   matrix_options.brightness = 100; // luminosité au max; on gère ca plus tard avec le filtre
 
@@ -617,7 +619,7 @@ int main(int argc, char *argv[])
   if (matrix == NULL)
     return 1;
 
-  //FrameCanvas *offscreen_canvas = matrix->CreateFrameCanvas();
+  // FrameCanvas *offscreen_canvas = matrix->CreateFrameCanvas();
 
   printf("Size: %dx%d. Hardware gpio mapping: %s\n",
          matrix->width(), matrix->height(), matrix_options.hardware_mapping);
@@ -716,8 +718,8 @@ int main(int argc, char *argv[])
 
   printf("Start OK\n");
   gifInfo.loadingScreenState = false; // on arrete le loading screen
-  loadingScreenThread.join();       // on attend la fin du loading screen
-  gifInfo.currentGIF = 1; // et on choisi le 1er gif
+  loadingScreenThread.join();         // on attend la fin du loading screen
+  gifInfo.currentGIF = 1;             // et on choisi le 1er gif
 
   if (stream_output)
   {
