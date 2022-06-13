@@ -36,7 +36,7 @@ Pour tester que s'est correctement installé:
 
 **3. Installation deq librairies nécessaires**
 
-```sudo apt-get install libboost-all-dev libgraphicsmagick++-dev libwebp-dev nlohmann-json-dev git -y```
+```sudo apt-get install libboost-all-dev libgraphicsmagick++-dev libwebp-dev nlohmann-json-dev rapidjson-dev git -y```
 
 **4. Configuration pour faire fonctioner la Matrice**
 a. Désactivation du son
