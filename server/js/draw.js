@@ -243,8 +243,16 @@ const ctx = canvas.getContext('2d');
 
 // Resizes the canvas to the available size of the window.
 function resize() {
-    ctx.canvas.width = window.innerWidth * 0.9;
-    ctx.canvas.height = window.innerWidth * 0.9;
+
+    if(window.innerWidth * 0.9 > 600)
+        ctx.canvas.width = 600;
+    else
+        ctx.canvas.width = window.innerWidth * 0.9;
+    
+    if(window.innerWidth * 0.9 > 600)
+        ctx.canvas.height = 600;
+    else
+        ctx.canvas.height = window.innerWidth * 0.9;
 }
 
 // Stores the initial position of the cursor

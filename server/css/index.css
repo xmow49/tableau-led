@@ -175,3 +175,11 @@ header button.presentation {
     left: unset !important;
     width: 150px;
 }
+
+
+.gif-preview{
+    height: 100px;
+    width: 100px;
+    border-radius: 7px;
+
+}

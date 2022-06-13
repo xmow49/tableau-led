@@ -68,11 +68,11 @@ struct MatrixLedData
 };
 struct MatrixFrameBuffer
 {
-  MatrixLedData buffer[128][128];
+  MatrixLedData buffer[128][128]; //une frame de 128*128 pixel
 };
 struct MatrixAnimationBuffer
 {
-  MatrixFrameBuffer animation[400];
+  MatrixFrameBuffer animation[400]; //400 frame max par gif
   uint16_t currentGifFrameCount = 0;
 };
 
@@ -90,7 +90,7 @@ struct GifInfo
 
 //----------------------- Déclarations des variables globales --------
 
-MatrixAnimationBuffer matrixGifsList[6];
+MatrixAnimationBuffer matrixGifsList[10];
 GifInfo gifInfo;
 volatile bool interrupt_received = false;
 
@@ -259,7 +259,7 @@ void sensorLoop(int minDistance = 5, int maxDistance = 300) // loop qui check le
     SleepMillis(20);
     getSensor(2, minDistance, maxDistance);
     SleepMillis(20);
-    printf("%d %d %d\n", currentSensor[0], currentSensor[1], currentSensor[2]); //peueter faire val +1
+    //printf("%d %d %d\n", currentSensor[0], currentSensor[1], currentSensor[2]); //peueter faire val +1
   }
 }
 
@@ -463,7 +463,7 @@ void WebSocketServer()
 
           std::string speed = j_complete["SPEED"];
           gifInfo.currentSpeed = atoi(speed.c_str()); // applique le changement
-          //printf("currentSpeed: %d\n", gifInfo.currentSpeed);
+          printf("Changment de GIF: GIF%d , Vitesse: %d\n", gifInfo.currentGIF, gifInfo.currentSpeed);
         }
         else if (mode == "DRAW")
         {
@@ -662,7 +662,7 @@ int main(int argc, char *argv[])
       file_info->content_stream = new rgb_matrix::MemStreamIO();
       file_info->is_multi_frame = image_sequence.size() > 1;
       rgb_matrix::StreamWriter out(file_info->content_stream);
-      printf("Gif Frame count: %d\n", image_sequence.size());
+      printf("Gif n°%d Frame count: %d\n", gifInfo.currentGIF, image_sequence.size());
       matrixGifsList[gifInfo.currentGIF].currentGifFrameCount = image_sequence.size();
 
       for (size_t i = 1; i < image_sequence.size(); ++i)

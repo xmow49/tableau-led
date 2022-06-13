@@ -1,8 +1,8 @@
 .radio-container {
     display: block;
     position: relative;
-    /* padding-left: 65px; */
-    /* margin-bottom: 12px; */
+    padding-left: 50px;
+    margin-bottom: 12px;
     width: 50px;
     height: 50px;
     margin: 5px;
@@ -32,12 +32,12 @@
     position: absolute;
     top: 0;
     left: 0;
-    height: 50px;
-    width: 50px;
+    height: 100px;
+    width: 100px;
     background-color: #eee;
     border: solid calc(var(--annimation-selector-border-size) / 2) var(--border-color);
     border-radius: 10px;
-    background: linear-gradient(255.53deg, #FFC700 9.2%, #3600A8 90.88%);
+    /* background: linear-gradient(255.53deg, #FFC700 9.2%, #3600A8 90.88%); */
 }
 
 
@@ -85,8 +85,9 @@
 .radio-container .radio-checkmark:after {
     top: calc(var(--annimation-selector-border-size) * -1);
     left: calc(var(--annimation-selector-border-size) * -1);
-    width: 50px;
-    height: 50px;
+    width: 100px;
+    height: 100px;
     border-radius: 10px;
-    border: solid var(--annimation-selector-border-size) var(--border-color);
+    border: crimson solid 5px
+    /* border: solid var(--annimation-selector-border-size) var(--border-color); */
 }
