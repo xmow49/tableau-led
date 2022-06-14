@@ -1,5 +1,6 @@
 //----------------------- Déclarations des library -------------------------
 #include "led-matrix.h"
+#include "graphics.h"
 #include "pixel-mapper.h"
 #include "content-streamer.h"
 
@@ -53,6 +54,7 @@ using rgb_matrix::Canvas;
 using rgb_matrix::FrameCanvas;
 using rgb_matrix::RGBMatrix;
 using rgb_matrix::StreamReader;
+using rgb_matrix::Color;
 using std::vector;
 
 namespace beast = boost::beast;         // from <boost/beast.hpp>
@@ -60,6 +62,7 @@ namespace http = beast::http;           // from <boost/beast/http.hpp>
 namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
 namespace net = boost::asio;            // from <boost/asio.hpp>
 using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
+
 
 //-----------------------------------------------------------------------------
 
@@ -89,13 +92,15 @@ struct GifInfo
     uint8_t loadingScreenFrameCount = 0;
     bool loadingScreenState = false;
     bool interruptDelayAnimation = false;
+    uint8_t loadingGifCount = 0;
+
 };
 
 //-----------------------------------------------------------------------------
 
 //----------------------- Déclarations des variables globales --------
 
-MatrixAnimationBuffer matrixGifsList[12];
+MatrixAnimationBuffer matrixGifsList[13];
 GifInfo gifInfo;
 volatile bool interrupt_received = false;
 
@@ -345,6 +350,19 @@ void DisplayAnimation(RGBMatrix *matrix) // fonction appeler pour afficher les g
 {
     gifInfo.interruptDelayAnimation = false;
     FrameCanvas *offscreen_canvas = matrix->CreateFrameCanvas();
+    
+    if(gifInfo.currentGIF == 11){ //library demo pour la presentation oral
+        for (int i = 0; i < 1000  && !interrupt_received && !gifInfo.interruptDelayAnimation ; ++i) {
+            for (int y = 0; y < 128; ++y) {
+                for (int x = 0; x < 128; ++x) {
+                    offscreen_canvas->SetPixel(x, y, i & 0xff, x, y);
+                }
+            }
+            offscreen_canvas = matrix->SwapOnVSync(offscreen_canvas, 1);
+        }
+        return;
+    }
+    
     for (uint16_t frame = 0; (frame <= matrixGifsList[gifInfo.currentGIF].currentGifFrameCount - 1) && !interrupt_received && !gifInfo.interruptDelayAnimation; frame++)
     {
         //printf("Frame: %d\n", frame);
@@ -502,18 +520,18 @@ void do_session(tcp::socket socket)
                                     {
                                         for (uint8_t x = 0; x < 128; x++)
                                         {
-                                            matrixGifsList[11].animation[0].buffer[y][x].red = 0;
-                                            matrixGifsList[11].animation[0].buffer[y][x].green = 0;
-                                            matrixGifsList[11].animation[0].buffer[y][x].blue = 0;
+                                            matrixGifsList[12].animation[0].buffer[y][x].red = 0;
+                                            matrixGifsList[12].animation[0].buffer[y][x].green = 0;
+                                            matrixGifsList[12].animation[0].buffer[y][x].blue = 0;
                                         }
                                     }
                                 }
                             }
                             else
                             {
-                                gifInfo.currentGIF = 11;                     // draw mode
+                                gifInfo.currentGIF = 12;                     // draw mode
                                 gifInfo.filterEnable = false;               // enlève le filtre de couleur
-                                matrixGifsList[11].currentGifFrameCount = 2; // gif de 2 frame
+                                matrixGifsList[12].currentGifFrameCount = 2; // gif de 2 frame
 
                                 printf("DRAW\n");
                                 if (json.HasMember("COLOR") && json.HasMember("LEDS"))
@@ -524,9 +542,9 @@ void do_session(tcp::socket socket)
                                         int y = json["LEDS"][i].GetUint() / 128;
                                         int x = json["LEDS"][i].GetUint() % 128;
 
-                                        matrixGifsList[11].animation[0].buffer[y][x].red = json["COLOR"][0].GetUint();
-                                        matrixGifsList[11].animation[0].buffer[y][x].green = json["COLOR"][1].GetUint();
-                                        matrixGifsList[11].animation[0].buffer[y][x].blue = json["COLOR"][2].GetUint();
+                                        matrixGifsList[12].animation[0].buffer[y][x].red = json["COLOR"][0].GetUint();
+                                        matrixGifsList[12].animation[0].buffer[y][x].green = json["COLOR"][1].GetUint();
+                                        matrixGifsList[12].animation[0].buffer[y][x].blue = json["COLOR"][2].GetUint();
                                        // printf("LED: %d %d: %d %d %d\n", x, y, matrixGifsList[11].animation[0].buffer[y][x].red, matrixGifsList[11].animation[0].buffer[y][x].green, matrixGifsList[11].animation[0].buffer[y][x].blue);
                                     }
                                 }
@@ -585,6 +603,17 @@ void WebSocketServer()
 
 void loadingScreenFunction(RGBMatrix *matrix)
 {
+  Color color(255, 255, 255);
+  Color bg_color(0, 0, 0);
+  Color flood_color(0, 0, 0);
+  const char *bdf_font_file = NULL;
+  bdf_font_file = "8x13.bdf";
+    rgb_matrix::Font font;
+  if (!font.LoadFont(bdf_font_file)) {
+    fprintf(stderr, "Couldn't load font '%s'\n", bdf_font_file);
+  }
+  rgb_matrix::Font *outline_font = NULL;
+
     while (gifInfo.loadingScreenState)
     {
         FrameCanvas *offscreen_canvas = matrix->CreateFrameCanvas();
@@ -600,6 +629,9 @@ void loadingScreenFunction(RGBMatrix *matrix)
                                                matrixGifsList[0].animation[frame].buffer[y][x].blue);
                 }
             }
+            std::string text = std::to_string(gifInfo.currentGIF) + "/" + std::to_string(gifInfo.loadingGifCount);
+            rgb_matrix::DrawText(offscreen_canvas, font, 50, 10 + font.baseline(), color, outline_font ? NULL : &bg_color, text.c_str(), 0);
+
             offscreen_canvas = matrix->SwapOnVSync(offscreen_canvas, 1);
             SleepMillis(100);
         }
@@ -707,9 +739,11 @@ int main(int argc, char *argv[])
     std::thread loadingScreenThread;
     printf("Analyzing Gifs...\n");
 
+    gifInfo.loadingGifCount = argc - optind;
     for (int imgarg = optind; imgarg < argc; ++imgarg)
     {
         gifInfo.currentGIF = imgarg - 1;
+
         const char *filename = argv[imgarg];
         FileInfo *file_info = NULL;
 
