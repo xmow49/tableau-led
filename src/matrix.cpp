@@ -343,8 +343,9 @@ static bool LoadImageAndScale(const char *filename,
 void DisplayAnimation(RGBMatrix *matrix) // fonction appeler pour afficher les gif
 {
     FrameCanvas *offscreen_canvas = matrix->CreateFrameCanvas();
-    for (uint16_t frame = 0; (frame < matrixGifsList[gifInfo.currentGIF].currentGifFrameCount - 1) && !interrupt_received; frame++)
+    for (uint16_t frame = 0; (frame <= matrixGifsList[gifInfo.currentGIF].currentGifFrameCount - 1) && !interrupt_received; frame++)
     {
+        //printf("Frame: %d\n", frame);
         //-------------------Gestion des transition fluides ------------------------
         for (int i = 0; i < 3; i++)
         {
@@ -386,7 +387,17 @@ void DisplayAnimation(RGBMatrix *matrix) // fonction appeler pour afficher les g
             }
         }
         offscreen_canvas = matrix->SwapOnVSync(offscreen_canvas, 1);
-        SleepMillis((15 * (100 - gifInfo.currentSpeed)) / 100);
+        if(gifInfo.currentSpeed == 0){
+            SleepMillis(100);
+        }
+        else if( gifInfo.currentSpeed == 1){
+            SleepMillis(5000);
+        }
+        else {
+            SleepMillis((15 * (100 - gifInfo.currentSpeed)) / 100);
+        }
+        
+
     }
 }
 
@@ -465,6 +476,7 @@ void do_session(tcp::socket socket)
                             {
                                 uint8_t gif = atoi(json["GIF"].GetString());
                                 gifInfo.currentGIF = gif;
+                                gifInfo.currentFrame = 0;
                             }
                             if (json.HasMember("SPEED"))
                             {
@@ -562,54 +574,6 @@ void WebSocketServer()
     catch (const std::exception &e)
     {
         std::cerr << "Error: " << e.what() << std::endl;
-    }
-
-    while (0)
-    {
-        bool wantReset = false;
-
-        auto const address = net::ip::make_address("0.0.0.0");
-        auto const port = static_cast<unsigned short>(std::atoi("8083"));
-
-        net::io_context ioc{1};
-
-        tcp::acceptor acceptor{ioc, {address, port}};
-
-        tcp::socket socket{ioc};
-
-        acceptor.accept(socket);
-        std::cout << "New WebSocket Connection" << std::endl;
-        auto q = std::move(socket);
-        websocket::stream<tcp::socket> ws{std::move(const_cast<tcp::socket &>(q))};
-
-        // Set a decorator to change the Server of the handshake
-        // no need to set. It ıs not necessary
-        // ws.set_option(websocket::stream_base::decorator(
-        //     [](websocket::response_type &res)
-        //     {
-        //         res.set(http::field::server,
-        //                 std::string(BOOST_BEAST_VERSION_STRING) +
-        //                     " websocket-server-sync");
-        //     }));
-        // Accept the websocket handshake
-        ws.accept();
-
-        while (!wantReset)
-        {
-            try
-            {
-            }
-            catch (beast::system_error const &se)
-            {
-                if (se.code() != websocket::error::closed)
-                {
-                    std::cerr << "Error: " << se.code().message() << std::endl;
-                    std::cout << "Reseting Websocket Server..." << std::endl;
-                    wantReset = true;
-                    break;
-                }
-            }
-        }
     }
 }
 
@@ -758,8 +722,10 @@ int main(int argc, char *argv[])
             printf("Gif n°%d Frame count: %d\n", gifInfo.currentGIF, image_sequence.size());
             matrixGifsList[gifInfo.currentGIF].currentGifFrameCount = image_sequence.size();
 
-            for (size_t i = 1; i < image_sequence.size(); ++i)
+            for (size_t i = 0; i < image_sequence.size(); i++)
             {
+                //printf("LoadFrame : %d\n", i);
+                gifInfo.currentFrame = i;
                 const Magick::Image &img = image_sequence[i];
                 int64_t delay_time_us;
                 if (file_info->is_multi_frame)
@@ -773,7 +739,6 @@ int main(int argc, char *argv[])
                 if (delay_time_us <= 0)
                     delay_time_us = 100 * 1000; // 1/10sec
                 StoreInStream(img);
-                gifInfo.currentFrame = i;
             }
 
             //------------------LOADING SCREEN -------------------

@@ -303,7 +303,7 @@ function startPainting(event) {
         send.dataBuild();
         if (!drawing) clearInterval(sendDrawInterval);
 
-    }, 20);
+    }, 200);
 }
 
 var drawTimeout;

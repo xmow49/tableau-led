@@ -41,17 +41,17 @@
     </div>
 
     <div class="option-container">
-        <button class="button-oral" onclick="setGif(0, false)">Diapo 1/2</button>
-        <button class="button-oral" onclick="setGif(6, false)">Diapo 3/4</button>
-        <button class="button-oral" onclick="setGif(7, false)">Diapo 5/6/7</button>
-        <button class="button-oral" onclick="setGif(8, false)">Diapo 8</button>
-        <button class="button-oral" onclick="setGif(00000, false)">Diapo 9/10</button>
-        <button class="button-oral" onclick="setGif(9, false)">Diapo 11/12</button>
-        <button class="button-oral" onclick="setGif(5, false)">Diapo 13</button>
-        <button class="button-oral" onclick="setGif(5, true)">Diapo 14</button>
-        <button class="button-oral" onclick="setGif(1, false)">Diapo 15/16/17</button>
-        <button class="button-oral" onclick="setGif(0, false)">Diapo 18</button>
-        <button class="button-oral" onclick="setGif(1, true)">Diapo Fin</button>
+        <button class="button-oral" onclick="setGif(0, false, 0)">Diapo 1/2</button>
+        <button class="button-oral" onclick="setGif(6, false, 1)">Diapo 3/4</button>
+        <button class="button-oral" onclick="setGif(7, false, 0)">Diapo 5/6/7</button>
+        <button class="button-oral" onclick="setGif(8, false, 0)">Diapo 8</button>
+        <button class="button-oral" onclick="setGif(0, false, 0)">Diapo 9/10</button>  <!---->
+        <button class="button-oral" onclick="setGif(9, false, 0)">Diapo 11/12</button>
+        <button class="button-oral" onclick="setGif(5, false, 30)">Diapo 13</button>
+        <button class="button-oral" onclick="setGif(5, true, 30)">Diapo 14</button>
+        <button class="button-oral" onclick="setGif(1, false, 50)">Diapo 15/16/17</button>
+        <button class="button-oral" onclick="setGif(0, false, 0)">Diapo 18</button>
+        <button class="button-oral" onclick="setGif(1, true, 50)">Diapo Fin</button>
     </div>
 
 </body>
@@ -61,12 +61,12 @@
 <script>
     var currentGIF = 1;
 
-    function setGif(gifID, enableFilter){
+    function setGif(gifID, enableFilter, speed){
         currentGIF = gifID;
-        sendPresentation(undefined, enableFilter);
+        sendPresentation(undefined, enableFilter, speed);
     }
 
-    function sendPresentation(action, enableFilter = false){
+    function sendPresentation(action, enableFilter = false, speed = 50){
         if(action == 'previous'){
             if(currentGIF <= 1){
                 currentGIF = 1;
@@ -85,7 +85,7 @@
             TO: 'CPP',
             MODE: "GIF",
             GIF: '' + currentGIF,
-            SPEED: '50',
+            SPEED: '' + speed,
             FILTER: enableFilter
         };
         console.log(dataaaaaaaa);
