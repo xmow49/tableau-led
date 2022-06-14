@@ -88,6 +88,7 @@ struct GifInfo
     bool filterEnable = true;
     uint8_t loadingScreenFrameCount = 0;
     bool loadingScreenState = false;
+    bool interruptDelayAnimation = false;
 };
 
 //-----------------------------------------------------------------------------
@@ -342,8 +343,9 @@ static bool LoadImageAndScale(const char *filename,
 
 void DisplayAnimation(RGBMatrix *matrix) // fonction appeler pour afficher les gif
 {
+    gifInfo.interruptDelayAnimation = false;
     FrameCanvas *offscreen_canvas = matrix->CreateFrameCanvas();
-    for (uint16_t frame = 0; (frame <= matrixGifsList[gifInfo.currentGIF].currentGifFrameCount - 1) && !interrupt_received; frame++)
+    for (uint16_t frame = 0; (frame <= matrixGifsList[gifInfo.currentGIF].currentGifFrameCount - 1) && !interrupt_received && !gifInfo.interruptDelayAnimation; frame++)
     {
         //printf("Frame: %d\n", frame);
         //-------------------Gestion des transition fluides ------------------------
@@ -391,7 +393,10 @@ void DisplayAnimation(RGBMatrix *matrix) // fonction appeler pour afficher les g
             SleepMillis(100);
         }
         else if( gifInfo.currentSpeed == 1){
-            SleepMillis(5000);
+            for(uint8_t i = 0; i < 50 && !gifInfo.interruptDelayAnimation; i++){
+                SleepMillis(100);
+            }
+            
         }
         else {
             SleepMillis((15 * (100 - gifInfo.currentSpeed)) / 100);
@@ -477,6 +482,7 @@ void do_session(tcp::socket socket)
                                 uint8_t gif = atoi(json["GIF"].GetString());
                                 gifInfo.currentGIF = gif;
                                 gifInfo.currentFrame = 0;
+                                gifInfo.interruptDelayAnimation = true;
                             }
                             if (json.HasMember("SPEED"))
                             {
