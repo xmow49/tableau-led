@@ -95,7 +95,7 @@ struct GifInfo
 
 //----------------------- Déclarations des variables globales --------
 
-MatrixAnimationBuffer matrixGifsList[10];
+MatrixAnimationBuffer matrixGifsList[12];
 GifInfo gifInfo;
 volatile bool interrupt_received = false;
 
@@ -260,12 +260,12 @@ void sensorLoop(int minDistance = 5, int maxDistance = 300) // loop qui check le
     while (1)
     {
         getSensor(0, minDistance, maxDistance);
-        SleepMillis(20);
+        SleepMillis(100);
         getSensor(1, minDistance, maxDistance);
-        SleepMillis(20);
+        SleepMillis(100);
         getSensor(2, minDistance, maxDistance);
-        SleepMillis(20);
-        // printf("%d %d %d\n", currentSensor[0], currentSensor[1], currentSensor[2]); //peueter faire val +1
+        SleepMillis(100);
+        //printf("%d %d %d\n", currentSensor[0], currentSensor[1], currentSensor[2]); //peueter faire val +1
     }
 }
 
@@ -502,18 +502,18 @@ void do_session(tcp::socket socket)
                                     {
                                         for (uint8_t x = 0; x < 128; x++)
                                         {
-                                            matrixGifsList[5].animation[0].buffer[y][x].red = 0;
-                                            matrixGifsList[5].animation[0].buffer[y][x].green = 0;
-                                            matrixGifsList[5].animation[0].buffer[y][x].blue = 0;
+                                            matrixGifsList[12].animation[0].buffer[y][x].red = 0;
+                                            matrixGifsList[12].animation[0].buffer[y][x].green = 0;
+                                            matrixGifsList[12].animation[0].buffer[y][x].blue = 0;
                                         }
                                     }
                                 }
                             }
                             else
                             {
-                                gifInfo.currentGIF = 5;                     // draw mode
+                                gifInfo.currentGIF = 12;                     // draw mode
                                 gifInfo.filterEnable = false;               // enlève le filtre de couleur
-                                matrixGifsList[5].currentGifFrameCount = 2; // gif de 2 frame
+                                matrixGifsList[12].currentGifFrameCount = 2; // gif de 2 frame
 
                                 printf("DRAW\n");
                                 if (json.HasMember("COLOR") && json.HasMember("LEDS"))
@@ -524,10 +524,10 @@ void do_session(tcp::socket socket)
                                         int y = json["LEDS"][i].GetUint() / 128;
                                         int x = json["LEDS"][i].GetUint() % 128;
 
-                                        matrixGifsList[5].animation[0].buffer[y][x].red = json["COLOR"][0].GetUint();
-                                        matrixGifsList[5].animation[0].buffer[y][x].green = json["COLOR"][1].GetUint();
-                                        matrixGifsList[5].animation[0].buffer[y][x].blue = json["COLOR"][2].GetUint();
-                                        printf("LED: %d %d: %d %d %d\n", x, y, matrixGifsList[5].animation[0].buffer[y][x].red, matrixGifsList[5].animation[0].buffer[y][x].green, matrixGifsList[5].animation[0].buffer[y][x].blue);
+                                        matrixGifsList[12].animation[0].buffer[y][x].red = json["COLOR"][0].GetUint();
+                                        matrixGifsList[12].animation[0].buffer[y][x].green = json["COLOR"][1].GetUint();
+                                        matrixGifsList[12].animation[0].buffer[y][x].blue = json["COLOR"][2].GetUint();
+                                       // printf("LED: %d %d: %d %d %d\n", x, y, matrixGifsList[12].animation[0].buffer[y][x].red, matrixGifsList[12].animation[0].buffer[y][x].green, matrixGifsList[12].animation[0].buffer[y][x].blue);
                                     }
                                 }
                             }
@@ -610,9 +610,6 @@ int main(int argc, char *argv[])
 {
 
     wiringPiSetup(); // initialisation des GPIO
-
-    std::thread CheckSensor(sensorLoop, MIN_DISTANCE, MAX_DISTANCE); // thread qui va lire les capteurs
-    std::thread CheckWebSocket(WebSocketServer);                     // thread qui gère le websocket
 
     Magick::InitializeMagick(*argv); // Initialize ImageMagick (pour la matrice)
 
@@ -773,9 +770,13 @@ int main(int argc, char *argv[])
     }
 
     printf("Start OK\n");
+
     gifInfo.loadingScreenState = false; // on arrete le loading screen
     loadingScreenThread.join();         // on attend la fin du loading screen
     gifInfo.currentGIF = 1;             // et on choisi le 1er gif
+
+    std::thread CheckSensor(sensorLoop, MIN_DISTANCE, MAX_DISTANCE); // thread qui va lire les capteurs
+    std::thread CheckWebSocket(WebSocketServer);                     // thread qui gère le websocket
 
     if (stream_output)
     {

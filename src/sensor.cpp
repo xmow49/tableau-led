@@ -54,9 +54,17 @@ int getSensor(unsigned char nSensor) // récupère la valeur d'un capeur en fonc
 int main(){
 
   wiringPiSetup();
-  while(1){
-      printf("%d\n", getSensor(1));
-      delay(500);
+int a = 29;
+pinMode(a,OUTPUT);
+while(1){
+      digitalWrite(a, HIGH);
+      printf("on\n");
+	//printf("%d\n", getSensor(1));
+      delay(1000);
+      digitalWrite(a, LOW);
+	printf("off\n");
+      delay(1000);
+
   }
 
 }
