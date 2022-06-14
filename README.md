@@ -67,3 +67,29 @@ Pour lancer le programme, executer le fichier `matrix` présent dans le dossier 
 `sudo ./matrix ./gifs/loading.gif ./gifs/1.gif ./gifs/2.gif ./gifs/3.gif ./gifs/4.gif` 
 
 Le premier gif sera affiché comme écran de chargement lors du démmarage.
+
+## Installation du service
+Le service permet de démmarer/arreter le programme avec un commande et de démmarrer le programme tous seul au boot du PI.
+
+1. Insallation du service
+
+```
+cd service
+./setup-service.sh
+```
+
+Maintenant vous pouvez démmarer les programme avec:
+
+```
+sudo systemctl start matrix
+sudo systemctl start server-matrix
+```
+
+Et les arreter avec
+
+```
+sudo systemctl stop matrix
+sudo systemctl stop server-matrix
+```
+
+
