@@ -502,18 +502,18 @@ void do_session(tcp::socket socket)
                                     {
                                         for (uint8_t x = 0; x < 128; x++)
                                         {
-                                            matrixGifsList[12].animation[0].buffer[y][x].red = 0;
-                                            matrixGifsList[12].animation[0].buffer[y][x].green = 0;
-                                            matrixGifsList[12].animation[0].buffer[y][x].blue = 0;
+                                            matrixGifsList[11].animation[0].buffer[y][x].red = 0;
+                                            matrixGifsList[11].animation[0].buffer[y][x].green = 0;
+                                            matrixGifsList[11].animation[0].buffer[y][x].blue = 0;
                                         }
                                     }
                                 }
                             }
                             else
                             {
-                                gifInfo.currentGIF = 12;                     // draw mode
+                                gifInfo.currentGIF = 11;                     // draw mode
                                 gifInfo.filterEnable = false;               // enlève le filtre de couleur
-                                matrixGifsList[12].currentGifFrameCount = 2; // gif de 2 frame
+                                matrixGifsList[11].currentGifFrameCount = 2; // gif de 2 frame
 
                                 printf("DRAW\n");
                                 if (json.HasMember("COLOR") && json.HasMember("LEDS"))
@@ -524,10 +524,10 @@ void do_session(tcp::socket socket)
                                         int y = json["LEDS"][i].GetUint() / 128;
                                         int x = json["LEDS"][i].GetUint() % 128;
 
-                                        matrixGifsList[12].animation[0].buffer[y][x].red = json["COLOR"][0].GetUint();
-                                        matrixGifsList[12].animation[0].buffer[y][x].green = json["COLOR"][1].GetUint();
-                                        matrixGifsList[12].animation[0].buffer[y][x].blue = json["COLOR"][2].GetUint();
-                                       // printf("LED: %d %d: %d %d %d\n", x, y, matrixGifsList[12].animation[0].buffer[y][x].red, matrixGifsList[12].animation[0].buffer[y][x].green, matrixGifsList[12].animation[0].buffer[y][x].blue);
+                                        matrixGifsList[11].animation[0].buffer[y][x].red = json["COLOR"][0].GetUint();
+                                        matrixGifsList[11].animation[0].buffer[y][x].green = json["COLOR"][1].GetUint();
+                                        matrixGifsList[11].animation[0].buffer[y][x].blue = json["COLOR"][2].GetUint();
+                                       // printf("LED: %d %d: %d %d %d\n", x, y, matrixGifsList[11].animation[0].buffer[y][x].red, matrixGifsList[11].animation[0].buffer[y][x].green, matrixGifsList[11].animation[0].buffer[y][x].blue);
                                     }
                                 }
                             }
@@ -629,7 +629,7 @@ int main(int argc, char *argv[])
 
     // options suplementaires
     matrix_options.pwm_bits = 11;
-    matrix_options.pwm_lsb_nanoseconds = 50;
+    matrix_options.pwm_lsb_nanoseconds = 100;
     //-------------------------------------
 
     rgb_matrix::RuntimeOptions runtime_opt;
