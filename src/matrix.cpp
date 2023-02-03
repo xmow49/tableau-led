@@ -537,7 +537,8 @@ void do_session(tcp::socket socket)
                                 if (json.HasMember("COLOR") && json.HasMember("LEDS"))
                                 {
                                     printf("OK %d\n", json["LEDS"].Size());
-                                    for (uint8_t i = 0; i < json["LEDS"].Size(); i++) // pour chaque led
+                                    uint32_t size = json["LEDS"].Size();
+                                    for (uint32_t i = 0; i < size; i++) // pour chaque led
                                     {
                                         int y = json["LEDS"][i].GetUint() / 128;
                                         int x = json["LEDS"][i].GetUint() % 128;
