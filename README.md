@@ -18,7 +18,7 @@ https://github.com/hzeller/rpi-rgb-led-matrix
 
 **1. Mise à jour du RaspberryPi**
 ```
-sudo apt update -y & sudo apt upgrade -y
+sudo apt update -y && sudo apt upgrade -y
 ```
 
 **2. Installation de WiringPi**
