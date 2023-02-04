@@ -16,6 +16,8 @@ https://github.com/hzeller/rpi-rgb-led-matrix
 
 # Installation
 
+Installer RaspberryPi OS Lite 32Bit
+
 **1. Mise à jour du RaspberryPi**
 ```
 sudo apt update -y && sudo apt upgrade -y
